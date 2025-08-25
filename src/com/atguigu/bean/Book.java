@@ -3,7 +3,7 @@ import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 
-public class XmlTreeDiffTxtReport {
+public class XmlDiffChecker {
 
     static class XmlNode {
         String name;
@@ -11,37 +11,7 @@ public class XmlTreeDiffTxtReport {
         XmlNode(String name) { this.name = name; }
     }
 
-    public static void main(String[] args) throws Exception {
-        File expectedFile = new File("expected.xml");
-        File inputDir = new File("input");
-        File reportFile = new File("diff_report.txt");
-
-        XmlNode expected = parseXml(expectedFile);
-
-        File[] xmlFiles = inputDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xml"));
-        Arrays.sort(xmlFiles, Comparator.comparing(File::getName));
-
-        try (PrintWriter writer = new PrintWriter(new FileWriter(reportFile))) {
-            for (File file : xmlFiles) {
-                XmlNode actual = parseXml(file);
-                List<String> diffs = new ArrayList<>();
-                compare(expected, actual, "", diffs);
-
-                writer.println("=== 文件: " + file.getName() + " ===");
-                if (diffs.isEmpty()) {
-                    writer.println("无差异");
-                } else {
-                    for (String diff : diffs) {
-                        writer.println(diff);
-                    }
-                }
-                writer.println();
-            }
-        }
-
-        System.out.println("TXT 差异报告生成完毕: " + reportFile.getAbsolutePath());
-    }
-
+    // 解析 XML 成树
     public static XmlNode parseXml(File file) throws Exception {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setIgnoringElementContentWhitespace(true);
@@ -62,37 +32,36 @@ public class XmlTreeDiffTxtReport {
         return node;
     }
 
-    private static void compare(XmlNode expected, XmlNode actual, String path, List<String> diffs) {
+    // 比较树，支持重复同名节点
+    public static void compare(XmlNode expected, XmlNode actual, String path, List<String> diffs) {
         path = path.isEmpty() ? "/" + expected.name : path + "/" + expected.name;
 
-        // 构建 map 方便查找同名子节点
+        // 统计期望子节点出现次数
         Map<String, List<XmlNode>> expMap = buildChildrenMap(expected.children);
         Map<String, List<XmlNode>> actMap = buildChildrenMap(actual.children);
 
         // 检查缺失和递归
         for (Map.Entry<String, List<XmlNode>> e : expMap.entrySet()) {
             String name = e.getKey();
-            List<XmlNode> expNodes = e.getValue();
-            List<XmlNode> actNodes = actMap.getOrDefault(name, Collections.emptyList());
+            List<XmlNode> expList = e.getValue();
+            List<XmlNode> actList = actMap.getOrDefault(name, Collections.emptyList());
 
-            int min = Math.min(expNodes.size(), actNodes.size());
-            // 递归对比匹配的子节点
+            int min = Math.min(expList.size(), actList.size());
             for (int i = 0; i < min; i++) {
-                compare(expNodes.get(i), actNodes.get(i), path, diffs);
+                compare(expList.get(i), actList.get(i), path, diffs);
             }
-            // 缺失节点
-            for (int i = min; i < expNodes.size(); i++) {
+            for (int i = min; i < expList.size(); i++) {
                 diffs.add("缺失: " + path + "/" + name);
             }
         }
 
-        // 多余节点
+        // 检查多余
         for (Map.Entry<String, List<XmlNode>> e : actMap.entrySet()) {
             String name = e.getKey();
-            List<XmlNode> actNodes = e.getValue();
-            List<XmlNode> expNodes = expMap.getOrDefault(name, Collections.emptyList());
+            List<XmlNode> actList = e.getValue();
+            List<XmlNode> expList = expMap.getOrDefault(name, Collections.emptyList());
 
-            for (int i = expNodes.size(); i < actNodes.size(); i++) {
+            for (int i = expList.size(); i < actList.size(); i++) {
                 diffs.add("多余: " + path + "/" + name);
             }
         }
@@ -100,9 +69,36 @@ public class XmlTreeDiffTxtReport {
 
     private static Map<String, List<XmlNode>> buildChildrenMap(List<XmlNode> children) {
         Map<String, List<XmlNode>> map = new HashMap<>();
-        for (XmlNode c : children) {
-            map.computeIfAbsent(c.name, k -> new ArrayList<>()).add(c);
+        for (XmlNode n : children) {
+            map.computeIfAbsent(n.name, k -> new ArrayList<>()).add(n);
         }
         return map;
+    }
+
+    public static void main(String[] args) throws Exception {
+        File expectedFile = new File("expected.xml");
+        File[] files = new File("input").listFiles((dir, name) -> name.endsWith(".xml"));
+
+        XmlNode expected = parseXml(expectedFile);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter("diff_report.txt"))) {
+            for (File file : files) {
+                List<String> diffs = new ArrayList<>();
+                XmlNode actual = parseXml(file);
+                compare(expected, actual, "", diffs);
+
+                writer.println("=== 文件: " + file.getName() + " ===");
+                if (diffs.isEmpty()) {
+                    writer.println("无差异");
+                } else {
+                    for (String diff : diffs) {
+                        writer.println(diff);
+                    }
+                }
+                writer.println();
+            }
+        }
+
+        System.out.println("TXT 差异报告生成完毕: diff_report.txt");
     }
 }
