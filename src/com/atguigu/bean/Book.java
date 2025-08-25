@@ -32,6 +32,15 @@ public class XmlDiffChecker {
         return node;
     }
 
+    // 递归打印缺失/多余节点及其子节点
+    private static void printSubtree(XmlNode node, String path, String prefix, List<String> diffs) {
+        String currentPath = path + "/" + node.name;
+        diffs.add(prefix + ": " + currentPath);
+        for (XmlNode child : node.children) {
+            printSubtree(child, currentPath, prefix, diffs);
+        }
+    }
+
     // 比较树，支持重复同名节点
     public static void compare(XmlNode expected, XmlNode actual, String path, List<String> diffs) {
         path = path.isEmpty() ? "/" + expected.name : path + "/" + expected.name;
@@ -51,7 +60,8 @@ public class XmlDiffChecker {
                 compare(expList.get(i), actList.get(i), path, diffs);
             }
             for (int i = min; i < expList.size(); i++) {
-                diffs.add("缺失: " + path + "/" + name);
+                // 整个子树缺失
+                printSubtree(expList.get(i), path, "缺失", diffs);
             }
         }
 
@@ -62,7 +72,8 @@ public class XmlDiffChecker {
             List<XmlNode> expList = expMap.getOrDefault(name, Collections.emptyList());
 
             for (int i = expList.size(); i < actList.size(); i++) {
-                diffs.add("多余: " + path + "/" + name);
+                // 整个子树多余
+                printSubtree(actList.get(i), path, "多余", diffs);
             }
         }
     }
