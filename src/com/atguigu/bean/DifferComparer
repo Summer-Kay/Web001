@@ -1,125 +1,116 @@
-
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
+import org.xml.sax.SAXException;
 
-public class XmlDiffChecker {
+public class XmlComparator {
 
-    static class XmlNode {
-        String name;
-        String value; // 节点值
-        List<XmlNode> children = new ArrayList<>();
-        XmlNode(String name, String value) {
-            this.name = name;
-            this.value = value;
-        }
-    }
-
-    // 解析 XML 成树
-    public static XmlNode parseXml(File file) throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setIgnoringElementContentWhitespace(true);
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document doc = db.parse(file);
-        return buildTree(doc.getDocumentElement());
-    }
-
-    private static XmlNode buildTree(Element element) {
-        String textValue = element.getTextContent().trim();
-        XmlNode node = new XmlNode(element.getTagName(), textValue.isEmpty() ? null : textValue);
-
-        NodeList children = element.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            Node n = children.item(i);
-            if (n instanceof Element) {
-                node.children.add(buildTree((Element) n));
-            }
-        }
-        return node;
-    }
-
-    // 打印缺失/多余子树
-    private static void printSubtree(XmlNode node, String path, String prefix, List<String> diffs) {
-        String currentPath = path + "/" + node.name;
-        diffs.add(prefix + ": " + currentPath);
-        for (XmlNode child : node.children) {
-            printSubtree(child, currentPath, prefix, diffs);
-        }
-    }
-
-    // 比较树（结构 + 值）
-    public static void compare(XmlNode expected, XmlNode actual, String path, List<String> diffs) {
-        path = path.isEmpty() ? "/" + expected.name : path + "/" + expected.name;
-
-        // 先比较值
-        if (expected.value != null && actual.value != null &&
-                !expected.value.equals(actual.value)) {
-            diffs.add("值不一致: " + path + " 期望=\"" + expected.value + "\" 实际=\"" + actual.value + "\"");
-        }
-
-        // 子节点 map
-        Map<String, List<XmlNode>> expMap = buildChildrenMap(expected.children);
-        Map<String, List<XmlNode>> actMap = buildChildrenMap(actual.children);
-
-        // 检查缺失并递归
-        for (Map.Entry<String, List<XmlNode>> e : expMap.entrySet()) {
-            String name = e.getKey();
-            List<XmlNode> expList = e.getValue();
-            List<XmlNode> actList = actMap.getOrDefault(name, Collections.emptyList());
-
-            int min = Math.min(expList.size(), actList.size());
-            for (int i = 0; i < min; i++) {
-                compare(expList.get(i), actList.get(i), path, diffs);
-            }
-            for (int i = min; i < expList.size(); i++) {
-                printSubtree(expList.get(i), path, "缺失", diffs);
-            }
-        }
-
-        // 检查多余
-        for (Map.Entry<String, List<XmlNode>> e : actMap.entrySet()) {
-            String name = e.getKey();
-            List<XmlNode> actList = e.getValue();
-            List<XmlNode> expList = expMap.getOrDefault(name, Collections.emptyList());
-
-            for (int i = expList.size(); i < actList.size(); i++) {
-                printSubtree(actList.get(i), path, "多余", diffs);
-            }
-        }
-    }
-
-    private static Map<String, List<XmlNode>> buildChildrenMap(List<XmlNode> children) {
-        Map<String, List<XmlNode>> map = new HashMap<>();
-        for (XmlNode n : children) {
-            map.computeIfAbsent(n.name, k -> new ArrayList<>()).add(n);
-        }
-        return map;
-    }
+    private static List<String> differences = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
-        File expectedFile = new File("expected.xml");
-        File[] files = new File("input").listFiles((dir, name) -> name.endsWith(".xml"));
+        if (args.length < 2) {
+            System.out.println("用法: java XmlComparator file1.xml file2.xml");
+            return;
+        }
 
-        XmlNode expected = parseXml(expectedFile);
+        File file1 = new File(args[0]);
+        File file2 = new File(args[1]);
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter("diff_report.txt"))) {
-            for (File file : files) {
-                List<String> diffs = new ArrayList<>();
-                XmlNode actual = parseXml(file);
-                compare(expected, actual, "", diffs);
+        Document doc1 = parseXml(file1);
+        Document doc2 = parseXml(file2);
 
-                writer.println("=== 文件: " + file.getName() + " ===");
-                if (diffs.isEmpty()) {
-                    writer.println("无差异");
-                } else {
-                    for (String diff : diffs) {
-                        writer.println(diff);
-                    }
+        compareNodes(doc1.getDocumentElement(), doc2.getDocumentElement(), "/");
+
+        generateHtmlReport("report.html");
+        System.out.println("比较完成，结果已保存到 report.html");
+    }
+
+    // 解析 XML
+    private static Document parseXml(File file) throws ParserConfigurationException, IOException, SAXException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringComments(true);
+        factory.setNamespaceAware(true);
+        factory.setIgnoringElementContentWhitespace(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        return builder.parse(file);
+    }
+
+    // 比较两个节点
+    private static void compareNodes(Node n1, Node n2, String path) {
+        if (n1 == null && n2 == null) return;
+
+        if (n1 == null || n2 == null) {
+            differences.add(path + " 节点存在于一个文件但不存在于另一个文件");
+            return;
+        }
+
+        if (!n1.getNodeName().equals(n2.getNodeName())) {
+            differences.add(path + " 节点名不同: " + n1.getNodeName() + " vs " + n2.getNodeName());
+        }
+
+        // 比较属性
+        NamedNodeMap attrs1 = n1.getAttributes();
+        NamedNodeMap attrs2 = n2.getAttributes();
+        if (attrs1 != null && attrs2 != null) {
+            for (int i = 0; i < attrs1.getLength(); i++) {
+                Node a1 = attrs1.item(i);
+                Node a2 = attrs2.getNamedItem(a1.getNodeName());
+                if (a2 == null) {
+                    differences.add(path + "/" + n1.getNodeName() + " 缺少属性 " + a1.getNodeName());
+                } else if (!a1.getNodeValue().equals(a2.getNodeValue())) {
+                    differences.add(path + "/" + n1.getNodeName() + " 属性 " + a1.getNodeName() + " 不同: " + a1.getNodeValue() + " vs " + a2.getNodeValue());
                 }
-                writer.println();
+            }
+            for (int i = 0; i < attrs2.getLength(); i++) {
+                Node a2 = attrs2.item(i);
+                Node a1 = attrs1.getNamedItem(a2.getNodeName());
+                if (a1 == null) {
+                    differences.add(path + "/" + n2.getNodeName() + " 多余属性 " + a2.getNodeName());
+                }
             }
         }
-        System.out.println("TXT 差异报告生成完毕: diff_report.txt");
+
+        // 比较文本内容
+        String v1 = n1.getTextContent().trim();
+        String v2 = n2.getTextContent().trim();
+        if (n1.getChildNodes().getLength() == 1 && n2.getChildNodes().getLength() == 1) {
+            if (!v1.equals(v2)) {
+                differences.add(path + "/" + n1.getNodeName() + " 值不同: " + v1 + " vs " + v2);
+            }
+        }
+
+        // 比较子节点
+        NodeList children1 = n1.getChildNodes();
+        NodeList children2 = n2.getChildNodes();
+
+        int len = Math.max(children1.getLength(), children2.getLength());
+        for (int i = 0; i < len; i++) {
+            Node c1 = i < children1.getLength() ? children1.item(i) : null;
+            Node c2 = i < children2.getLength() ? children2.item(i) : null;
+
+            if (c1 != null && c1.getNodeType() == Node.TEXT_NODE && c1.getTextContent().trim().isEmpty()) continue;
+            if (c2 != null && c2.getNodeType() == Node.TEXT_NODE && c2.getTextContent().trim().isEmpty()) continue;
+
+            compareNodes(c1, c2, path + "/" + (c1 != null ? c1.getNodeName() : (c2 != null ? c2.getNodeName() : "")));
+        }
+    }
+
+    // 生成 HTML 报告
+    private static void generateHtmlReport(String fileName) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            writer.write("<html><head><meta charset='UTF-8'><title>XML 比较报告</title></head><body>");
+            writer.write("<h2>XML 文件比较结果</h2>");
+            if (differences.isEmpty()) {
+                writer.write("<p style='color:green;'>两个文件完全一致</p>");
+            } else {
+                writer.write("<ul>");
+                for (String diff : differences) {
+                    writer.write("<li style='color:red;'>" + diff + "</li>");
+                }
+                writer.write("</ul>");
+            }
+            writer.write("</body></html>");
+        }
     }
 }
