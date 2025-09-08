@@ -1,0 +1,193 @@
+import org.w3c.dom.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+import java.util.*;
+
+public class XmlDiffTool {
+
+    static class DiffEntry {
+        String kind;
+        String path;
+        Map<String, String> details;
+
+        DiffEntry(String kind, String path, Map<String, String> details) {
+            this.kind = kind;
+            this.path = path;
+            this.details = details;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[").append(kind).append("] ").append(path).append("\n");
+            for (Map.Entry<String, String> e : details.entrySet()) {
+                sb.append("    ").append(e.getKey()).append(": ").append(e.getValue()).append("\n");
+            }
+            return sb.toString();
+        }
+    }
+
+    private static List<DiffEntry> diffs = new ArrayList<>();
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 2) {
+            System.out.println("Usage: java XmlDiffTool left.xml right.xml");
+            return;
+        }
+
+        Document left = parseXml(args[0]);
+        Document right = parseXml(args[1]);
+
+        compareElements(left.getDocumentElement(), right.getDocumentElement(), new ArrayDeque<>(), Arrays.asList("id", "name", "key"));
+
+        for (DiffEntry d : diffs) {
+            System.out.print(d);
+        }
+    }
+
+    private static Document parseXml(String path) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringElementContentWhitespace(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        return builder.parse(new File(path));
+    }
+
+    private static void compareElements(Element left, Element right, Deque<Element> stack, List<String> keyAttrs) {
+        stack.addLast(left != null ? left : right);
+        String path = buildPath(stack);
+
+        if (left == null) {
+            addDiff("missing_node", path, mapOf("side", "left", "node", serialize(right)));
+            stack.removeLast();
+            return;
+        }
+        if (right == null) {
+            addDiff("missing_node", path, mapOf("side", "right", "node", serialize(left)));
+            stack.removeLast();
+            return;
+        }
+
+        if (!left.getTagName().equals(right.getTagName())) {
+            addDiff("tag_mismatch", path, mapOf("left_tag", left.getTagName(), "right_tag", right.getTagName()));
+        }
+
+        // Compare attributes
+        NamedNodeMap la = left.getAttributes();
+        NamedNodeMap ra = right.getAttributes();
+        Set<String> allAttrs = new HashSet<>();
+        for (int i=0;i<la.getLength();i++) allAttrs.add(la.item(i).getNodeName());
+        for (int i=0;i<ra.getLength();i++) allAttrs.add(ra.item(i).getNodeName());
+        for (String k : allAttrs) {
+            String lv = left.getAttribute(k);
+            String rv = right.getAttribute(k);
+            if (!Objects.equals(lv, rv)) {
+                if (lv.isEmpty()) {
+                    addDiff("missing_attribute", path, mapOf("attribute", k, "side", "left", "right_value", rv));
+                } else if (rv.isEmpty()) {
+                    addDiff("missing_attribute", path, mapOf("attribute", k, "side", "right", "left_value", lv));
+                } else {
+                    addDiff("attribute_difference", path, mapOf("attribute", k, "left_value", lv, "right_value", rv));
+                }
+            }
+        }
+
+        // Compare text
+        String ltext = left.getTextContent().trim();
+        String rtext = right.getTextContent().trim();
+        if (!ltext.equals(rtext) && !(ltext.isEmpty() && rtext.isEmpty())) {
+            addDiff("text_difference", path, mapOf("left_text", ltext, "right_text", rtext));
+        }
+
+        // Compare children
+        List<Element> lchildren = getChildren(left);
+        List<Element> rchildren = getChildren(right);
+
+        Map<String, Element> rmap = indexChildren(rchildren, keyAttrs);
+        Set<Element> matched = new HashSet<>();
+
+        for (Element lchild : lchildren) {
+            String key = childKey(lchild, keyAttrs);
+            Element rchild = rmap.get(key);
+            if (rchild != null) {
+                compareElements(lchild, rchild, stack, keyAttrs);
+                matched.add(rchild);
+            } else {
+                addDiff("extra_subtree", buildPath(stack)+"/"+lchild.getTagName(), mapOf("side", "left", "node", serialize(lchild)));
+            }
+        }
+        for (Element rchild : rchildren) {
+            if (!matched.contains(rchild)) {
+                addDiff("extra_subtree", buildPath(stack)+"/"+rchild.getTagName(), mapOf("side", "right", "node", serialize(rchild)));
+            }
+        }
+
+        stack.removeLast();
+    }
+
+    private static List<Element> getChildren(Element e) {
+        NodeList nl = e.getChildNodes();
+        List<Element> list = new ArrayList<>();
+        for (int i=0;i<nl.getLength();i++) {
+            if (nl.item(i) instanceof Element) list.add((Element) nl.item(i));
+        }
+        return list;
+    }
+
+    private static Map<String, Element> indexChildren(List<Element> children, List<String> keyAttrs) {
+        Map<String, Element> map = new HashMap<>();
+        for (Element c : children) {
+            map.put(childKey(c, keyAttrs), c);
+        }
+        return map;
+    }
+
+    private static String childKey(Element e, List<String> keyAttrs) {
+        for (String k : keyAttrs) {
+            if (e.hasAttribute(k)) {
+                return e.getTagName()+"[@"+k+"='"+e.getAttribute(k)+"']";
+            }
+        }
+        return e.getTagName();
+    }
+
+    private static void addDiff(String kind, String path, Map<String, String> details) {
+        diffs.add(new DiffEntry(kind, path, details));
+    }
+
+    private static String buildPath(Deque<Element> stack) {
+        StringBuilder sb = new StringBuilder();
+        for (Element e : stack) {
+            sb.append("/").append(e.getTagName());
+            for (String k : Arrays.asList("id","name","key")) {
+                if (e.hasAttribute(k)) {
+                    sb.append("[@").append(k).append("='").append(e.getAttribute(k)).append("']");
+                    break;
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String serialize(Element e) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<").append(e.getTagName());
+        NamedNodeMap attrs = e.getAttributes();
+        for (int i=0;i<attrs.getLength();i++) {
+            Node a = attrs.item(i);
+            sb.append(" ").append(a.getNodeName()).append("=\"").append(a.getNodeValue()).append("\"");
+        }
+        sb.append(">");
+        sb.append(e.getTextContent());
+        sb.append("</").append(e.getTagName()).append(">");
+        return sb.toString();
+    }
+
+    private static Map<String,String> mapOf(String... kv) {
+        Map<String,String> m = new HashMap<>();
+        for (int i=0;i<kv.length;i+=2) {
+            m.put(kv[i], kv[i+1]);
+        }
+        return m;
+    }
+}
