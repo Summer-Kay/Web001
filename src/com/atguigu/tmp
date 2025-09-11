@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MxML version="1-1">
+   <events>
+      <mainEvent>
+         <action>insertion</action>
+         <object href="#trade_1">
+            <objectNature>trade</objectNature>
+            <objectId>1</objectId>
+         </object>
+         <inputBy>
+            <desk>FO</desk>
+            <group>ZDL_IMPFO</group>
+            <userName>PEIYING</userName>
+         </inputBy>
+      </mainEvent>
+   </events>
+   <trades>
+      <trade id="trade_1">
+         <parties>
+            <party id="our_custy_ref">
+               <partyName>SCB LONDON</partyName>
+            </party>
+            <party id="their_custy_ref">
+               <partyName>CITI/LDN</partyName>
+            </party>
+            <party id="CLEARER">
+               <partyName>CLEARER</partyName>
+            </party>
+         </parties>
+         <portfolios>
+            <portfolio id="portfolio_ref">
+               <portfolioLabel>OP_GBL_EURJPY</portfolioLabel>
+            </portfolio>
+         </portfolios>
+         <tradeHeader>
+            <tradeDate>20250902</tradeDate>
+            <tradeCategory>
+               <tradeDestination>external</tradeDestination>
+               <tradeFamily>CURR</tradeFamily>
+               <tradeGroup>FXD</tradeGroup>
+               <tradeType>FXD</tradeType>
+            </tradeCategory>
+            <tradeViews>
+               <tradeView>
+                  <partyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </partyReference>
+                  <userName>PEIYING</userName>
+                  <tradeId>
+                     <tradeExternalId>7423960_12_SCB.(2)</tradeExternalId>
+                  </tradeId>
+                  <comments>
+                     <comment index="1">RTN:549300U3YSKW7QY13Y70GBR742</comment>
+                     <comment index="2">RTN:3961</comment>
+                  </comments>
+               </tradeView>
+               <tradeView>
+                  <partyReference href="#their_custy_ref"/>
+               </tradeView>
+            </tradeViews>
+            <tradeUserDefinedFields>
+               <userDefinedField>
+                  <fieldLabel>SRC_SYSTEM</fieldLabel>
+                  <fieldIndex>67</fieldIndex>
+                  <fieldValue>GFI</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXT_REF_NB</fieldLabel>
+                  <fieldId>1024</fieldId>
+                  <fieldIndex>1</fieldIndex>
+                  <fieldValue>7423960_12_SCB.(2)</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>MARKETER</fieldLabel>
+                  <fieldId>1024</fieldId>
+                  <fieldIndex>33</fieldIndex>
+                  <fieldValue/>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>USI_NSPACE</fieldLabel>
+                  <fieldValue>549300EHVAB7PJ11OV18</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>USI_VALUE</fieldLabel>
+                  <fieldValue/>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXE_VENUE</fieldLabel>
+                  <fieldValue>GSEF</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>TRAN_ID</fieldLabel>
+                  <fieldValue>GBLL6191629</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXE_TIME</fieldLabel>
+                  <fieldValue>20250902033908.547800</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>WAIVER_IND</fieldLabel>
+                  <fieldValue/>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>TRADER_ID</fieldLabel>
+                  <fieldValue>1645092</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+            </tradeUserDefinedFields>
+            <tradeFees>
+               <tradeFee index="0">
+                  <payerPartyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </payerPartyReference>
+                  <receiverPartyReference href="#broker_ref"/>
+                  <feeDateType>transactionDate</feeDateType>
+                  <feeDate>20250902</feeDate>
+                  <autoShell>false</autoShell>
+                  <autoFee>false</autoFee>
+               </tradeFee>
+               <tradeFee index="1">
+                  <payerPartyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </payerPartyReference>
+                  <receiverPartyReference href="#CLEARER"/>
+                  <feeType>7</feeType>
+                  <feeCurrency>USD</feeCurrency>
+                  <feeAmount/>
+                  <feeDateType>transactionDate</feeDateType>
+                  <feeDate>20250902</feeDate>
+                  <autoShell>true</autoShell>
+                  <autoFee>true</autoFee>
+               </tradeFee>
+            </tradeFees>
+         </tradeHeader>
+         <tradeBody>
+            <fxSpotForward>
+               <currency1Flow>
+                  <payerPartyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </payerPartyReference>
+                  <receiverPartyReference href="#their_custy_ref"/>
+                  <date>20250917</date>
+                  <currency>EUR</currency>
+                  <amount>6000000</amount>
+                  <fxCls>no</fxCls>
+               </currency1Flow>
+               <currency2Flow>
+                  <payerPartyReference href="#their_custy_ref"/>
+                  <receiverPartyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </receiverPartyReference>
+                  <date>20250917</date>
+                  <currency>JPY</currency>
+                  <amount>1035486000</amount>
+                  <fxCls>no</fxCls>
+               </currency2Flow>
+               <exchangeRate>
+                  <fxQuotation>
+                     <currency1>EUR</currency1>
+                     <currency2>JPY</currency2>
+                     <fxQuoteBasis>currency2PerCurrency1</fxQuoteBasis>
+                     <formFactor>1</formFactor>
+                  </fxQuotation>
+                  <rate>172.581</rate>
+               </exchangeRate>
+               <forwardDelivery>forward</forwardDelivery>
+               <spotDate>20250902</spotDate>
+            </fxSpotForward>
+         </tradeBody>
+         <tradeInputConditions>
+            <inputBy>
+               <userName>PEIYING</userName>
+            </inputBy>
+            <systemDate>20250902</systemDate>
+         </tradeInputConditions>
+      </trade>
+   </trades>
+</MxML>
+
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<MxML version="1-1">
+   <events>
+      <mainEvent>
+         <action>insertion</action>
+         <object href="#trade_1">
+            <objectNature>trade</objectNature>
+            <objectId>1</objectId>
+         </object>
+         <inputBy>
+            <desk>FO</desk>
+            <group>ZDL_IMPFO</group>
+            <userName>Shilpi Clerk</userName>
+         </inputBy>
+      </mainEvent>
+   </events>
+   <trades>
+      <trade id="trade_1">
+         <parties>
+            <party id="our_custy_ref">
+               <partyName>SCB LONDON</partyName>
+            </party>
+            <party id="their_custy_ref">
+               <partyName>CITI/LDN</partyName>
+            </party>
+            <party id="CLEARER">
+               <partyName>CLEARER</partyName>
+            </party>
+         </parties>
+         <portfolios>
+            <portfolio id="portfolio_ref">
+               <portfolioLabel>OP_GBL_EURJPY</portfolioLabel>
+            </portfolio>
+         </portfolios>
+         <tradeHeader>
+            <tradeDate>20250903</tradeDate>
+            <tradeCategory>
+               <tradeDestination>external</tradeDestination>
+               <tradeFamily>CURR</tradeFamily>
+               <tradeGroup>FXD</tradeGroup>
+               <tradeType>FXD</tradeType>
+            </tradeCategory>
+            <tradeViews>
+               <tradeView>
+                  <partyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </partyReference>
+                  <userName>Shilpi Clerk</userName>
+                  <tradeId>
+                     <tradeExternalId>90415863</tradeExternalId>
+                  </tradeId>
+                  <comments>
+                     <comment index="0">GuichengZhang@sc.com</comment>
+                     <comment index="1">RTN:549300U3YSKW7QY13Y70GBR240</comment>
+                     <comment index="2">RTN:9396</comment>
+                  </comments>
+               </tradeView>
+               <tradeView>
+                  <partyReference href="#their_custy_ref"/>
+               </tradeView>
+            </tradeViews>
+            <tradeUserDefinedFields>
+               <userDefinedField>
+                  <fieldLabel>SRC_SYSTEM</fieldLabel>
+                  <fieldIndex>67</fieldIndex>
+                  <fieldValue>GFI</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXT_REF_NB</fieldLabel>
+                  <fieldId>1024</fieldId>
+                  <fieldIndex>33</fieldIndex>
+                  <fieldValue>2409398.(3)</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>USI_NSPACE</fieldLabel>
+                  <fieldValue>549300U3YSKW7QY13Y70</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>USI_VALUE</fieldLabel>
+                  <fieldValue>Long Name of: MTFLGBLH335188tolong530327</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXE_VENUE</fieldLabel>
+                  <fieldValue>GSEF</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>TRAN_ID</fieldLabel>
+                  <fieldValue/>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXE_TIME</fieldLabel>
+                  <fieldValue>20250903122434.000000</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>EXE_ID</fieldLabel>
+                  <fieldValue/>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+               <userDefinedField>
+                  <fieldLabel>TRADER_ID</fieldLabel>
+                  <fieldValue>1604901</fieldValue>
+                  <fieldType>character</fieldType>
+               </userDefinedField>
+            </tradeUserDefinedFields>
+         </tradeHeader>
+         <tradeBody>
+            <fxSpotForward>
+               <currency1Flow>
+                  <payerPartyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </payerPartyReference>
+                  <receiverPartyReference href="#their_custy_ref"/>
+                  <date>20250917</date>
+                  <currency>EUR</currency>
+                  <amount>6000000</amount>
+               </currency1Flow>
+               <currency2Flow>
+                  <payerPartyReference href="#their_custy_ref"/>
+                  <receiverPartyReference href="#our_custy_ref">
+                     <portfolioReference href="#portfolio_ref"/>
+                  </receiverPartyReference>
+                  <date>20250917</date>
+                  <currency>JPY</currency>
+                  <amount>1035486000</amount>
+               </currency2Flow>
+               <exchangeRate>
+                  <fxQuotation>
+                     <currency1>EUR</currency1>
+                     <currency2>JPY</currency2>
+                     <fxQuoteBasis>currency2PerCurrency1</fxQuoteBasis>
+                     <formFactor>1</formFactor>
+                  </fxQuotation>
+                  <rate>172.581</rate>
+               </exchangeRate>
+            </fxSpotForward>
+         </tradeBody>
+         <tradeInputConditions>
+            <inputBy>
+               <userName>Shilpi Clerk</userName>
+            </inputBy>
+            <systemDate>20250903</systemDate>
+         </tradeInputConditions>
+      </trade>
+   </trades>
+</MxML>
