@@ -1,0 +1,129 @@
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.*;
+import org.xmlunit.diff.ElementSelectors;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import java.io.StringReader;
+import java.util.*;
+
+public class UniversalXmlComparator {
+    
+    /**
+     * 通用的XML比较，基于文本内容匹配
+     */
+    public static ComparisonResult compareXmlUniversally(String xml1, String xml2) {
+        Source source1 = new StreamSource(new StringReader(xml1));
+        Source source2 = new StreamSource(new StringReader(xml2));
+        
+        Diff diff = DiffBuilder.compare(source1)
+                .withTest(source2)
+                .withNodeMatcher(createUniversalNodeMatcher())
+                .withDifferenceEvaluator(createUniversalEvaluator())
+                .ignoreWhitespace()
+                .ignoreComments()
+                .checkForSimilar()
+                .build();
+        
+        return analyzeDifferences(diff);
+    }
+    
+    private static DefaultNodeMatcher createUniversalNodeMatcher() {
+        return new DefaultNodeMatcher(
+            ElementSelectors.conditionalBuilder()
+                // 优先按文本内容匹配
+                .when(element -> hasTextContent(element))
+                    .thenUse((e1, e2) -> textContentMatches(e1, e2))
+                // 其次按ID属性匹配
+                .when(element -> hasAttribute(element, "id"))
+                    .thenUse(ElementSelectors.byNameAndAttributes("id"))
+                // 然后按其他关键属性匹配
+                .when(element -> hasAttribute(element, "key"))
+                    .thenUse(ElementSelectors.byNameAndAttributes("key"))
+                .when(element -> hasAttribute(element, "name"))
+                    .thenUse(ElementSelectors.byNameAndAttributes("name"))
+                // 默认按元素名匹配
+                .elseUse(ElementSelectors.byName)
+                .build()
+        );
+    }
+    
+    private static boolean hasTextContent(Element element) {
+        return element != null && !element.getTextContent().trim().isEmpty();
+    }
+    
+    private static boolean textContentMatches(Element e1, Element e2) {
+        if (e1 == null || e2 == null) return false;
+        String text1 = e1.getTextContent().trim();
+        String text2 = e2.getTextContent().trim();
+        return text1.equals(text2) && e1.getTagName().equals(e2.getTagName());
+    }
+    
+    private static boolean hasAttribute(Element element, String attrName) {
+        return element != null && element.hasAttribute(attrName);
+    }
+    
+    private static DifferenceEvaluator createUniversalEvaluator() {
+        return DifferenceEvaluators.chain(
+            DifferenceEvaluators.Default,
+            // 忽略文本节点的顺序差异
+            DifferenceEvaluators.downgradeDifferencesToSimilar(
+                ComparisonType.CHILD_NODELIST_SEQUENCE
+            ),
+            // 特殊处理文本内容差异
+            (comparison, outcome) -> {
+                if (comparison.getType() == ComparisonType.TEXT_VALUE) {
+                    // 可以在这里添加自定义的文本比较逻辑
+                    return outcome;
+                }
+                return outcome;
+            }
+        );
+    }
+    
+    private static ComparisonResult analyzeDifferences(Diff diff) {
+        ComparisonResult result = new ComparisonResult();
+        
+        diff.getDifferences().forEach(difference -> {
+            Comparison comparison = difference.getComparison();
+            switch (comparison.getType()) {
+                case CHILD_NODELIST_LENGTH:
+                    result.addMissingNode(comparison);
+                    break;
+                case TEXT_VALUE:
+                    result.addTextDifference(comparison);
+                    break;
+                case ATTRIBUTE_VALUE:
+                    result.addAttributeDifference(comparison);
+                    break;
+                default:
+                    result.addOtherDifference(comparison);
+            }
+        });
+        
+        return result;
+    }
+    
+    public static class ComparisonResult {
+        private final List<String> missingNodes = new ArrayList<>();
+        private final List<String> textDifferences = new ArrayList<>();
+        private final List<String> attributeDifferences = new ArrayList<>();
+        private final List<String> otherDifferences = new ArrayList<>();
+        
+        public void addMissingNode(Comparison comparison) {
+            missingNodes.add("缺失节点: " + comparison.getControlDetails().getXPath());
+        }
+        
+        public void addTextDifference(Comparison comparison) {
+            textDifferences.add("文本差异: " + comparison.getControlDetails().getValue() + 
+                              " -> " + comparison.getTestDetails().getValue());
+        }
+        
+        // ... 其他方法
+        
+        public String getSummary() {
+            return String.format("缺失节点: %d, 文本差异: %d, 属性差异: %d, 其他差异: %d",
+                               missingNodes.size(), textDifferences.size(), 
+                               attributeDifferences.size(), otherDifferences.size());
+        }
+    }
+}
