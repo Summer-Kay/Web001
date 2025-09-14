@@ -1,0 +1,1117 @@
+XML差异报告 - 路径格式
+
+7423960_12_SCB.(1)_2409398.(2).xml_original
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: PEIYING
+
+2. /trades/trade/parties/party[@id='broker_ref']/partyName
+   原始值: GFI/LDN
+   期望值: GFIGR/SIN
+
+3. /trades/trade/tradeHeader/tradeDate
+   原始值: 20250903
+   期望值: 20250902
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: PEIYING
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90415863
+   期望值: 7423960_12_SCB.(1)
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:549300U3YSKW7QY13Y70GBR240
+   期望值: RTN:549300U3YSKW7QY13Y70GBR742
+
+8. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9396
+   期望值: RTN:3961
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+    原始值: 2409398.(2)
+    期望值: 7423960_12_SCB.(1)
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 空
+    期望值: GBLL6191629
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250903122434.000000
+    期望值: 20250902033908.547800
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 1645092
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+15. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 空
+    期望值: 298
+
+16. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    原始值: clearerFee
+    期望值: 7
+
+17. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    原始值: 0
+    期望值: 空
+
+18. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    原始值: 不存在
+    期望值: EUR
+
+19. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    原始值: 0.515
+    期望值: 0
+
+20. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    原始值: 0
+    期望值: 0.
+
+21. /trades/trade/tradeInputConditions/inputBy
+    原始值: 不存在
+    期望值: 存在 (包含userName: PEIYING)
+
+22. /trades/trade/tradeInputConditions/systemDate
+    原始值: 20250903
+    期望值: 20250902
+
+7423960_12_SCB.(2)_2409398.(3).xml_original
+
+XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: PEIYING
+
+2. /trades/trade/tradeHeader/tradeDate
+   原始值: 20250903
+   期望值: 20250902
+
+3. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: PEIYING
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90415863
+   期望值: 7423960_12_SCB.(2)
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:549300U3YSKW7QY13Y70GBR240
+   期望值: RTN:549300U3YSKW7QY13Y70GBR742
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9396
+   期望值: RTN:3961
+
+8. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+   原始值: 2409398.(3)
+   期望值: 7423960_12_SCB.(2)
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='MARKETER']
+    原始值: 不存在
+    期望值: 存在 (fieldId:1024, fieldIndex:33, 空值)
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    原始值: 549300U3YSKW7QY13Y70
+    期望值: 549300EHVAB7PJ11OV18
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: Long Name of: MTFLGBLH335188tolong530327
+    期望值: 空
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 空
+    期望值: GBLL6191629
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250903122434.000000
+    期望值: 20250902033908.547800
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+16. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 1645092
+
+17. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (空值)
+    期望值: 不存在
+
+18. /trades/trade/tradeHeader/tradeFees
+    原始值: 不存在
+    期望值: 存在 (包含两个tradeFee条目)
+
+19. /trades/trade/tradeBody/fxSpotForward/currency1Flow/fxCls
+    原始值: 不存在
+    期望值: no
+
+20. /trades/trade/tradeBody/fxSpotForward/currency2Flow/fxCls
+    原始值: 不存在
+    期望值: no
+
+21. /trades/trade/tradeBody/fxSpotForward/forwardDelivery
+    原始值: 不存在
+    期望值: forward
+
+22. /trades/trade/tradeBody/fxSpotForward/spotDate
+    原始值: 不存在
+    期望值: 20250902
+
+23. /trades/trade/tradeInputConditions/inputBy/userName
+    原始值: Shilpi Clerk
+    期望值: PEIYING
+
+24. /trades/trade/tradeInputConditions/systemDate
+    原始值: 20250903
+    期望值: 20250902
+
+7423960_12_SCB.(3)_2409389.(1).xml_original
+
+XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: PEIYING
+
+2. /trades/trade/parties/party[@id='broker_ref']/partyName
+   原始值: GFI/LDN
+   期望值: GFIGR/SIN
+
+3. /trades/trade/tradeHeader/tradeDate
+   原始值: 20250903
+   期望值: 20250902
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: PEIYING
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90415863
+   期望值: 7423960_12_SCB.(3)
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:549300U3YSKW7QY13Y70GBR240
+   期望值: RTN:549300U3YSKW7QY13Y70GBR742
+
+8. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9396
+   期望值: RTN:3961
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+    原始值: 2409398.(1)
+    期望值: 7423960_12_SCB.(3)
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 空
+    期望值: GBLL6191629
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250903122434.000000
+    期望值: 20250902033908.547800
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 1645092
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (空值)
+    期望值: 不存在
+
+16. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 0.0
+    期望值: 空
+
+17. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    原始值: clearerFee
+    期望值: 7
+
+18. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    原始值: 0
+    期望值: 空
+
+19. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeDate
+    原始值: 20250903
+    期望值: 20250902
+
+20. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    原始值: 不存在
+    期望值: EUR
+
+21. /trades/trade/tradeBody/fxOption/fxVanillaOption/fxStrike/exchangeRate/rate
+    原始值: 170.50
+    期望值: 170.5
+
+22. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    原始值: 0.16
+    期望值: 0
+
+23. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    原始值: 0
+    期望值: 0.
+
+24. /trades/trade/tradeInputConditions/inputBy
+    原始值: 不存在
+    期望值: 存在 (包含userName: PEIYING)
+
+25. /trades/trade/tradeInputConditions/systemDate
+    原始值: 20250903
+    期望值: 20250902
+
+ 7423960_12_SCB.(4)_2409398.(4).xml_original
+
+XML差异报告 - 路径格式
+
+1. /trades/trade/parties/party[@id='broker_ref']
+   原始值: 存在 (GFIGR/SIN)
+   期望值: 不存在
+
+2. /trades/trade/tradeHeader/tradeCategory/tradeGroup
+   原始值: OPT
+   期望值: FXD
+
+3. /trades/trade/tradeHeader/tradeCategory/tradeType
+   原始值: SMP
+   期望值: FXD
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/strategy
+   原始值: 存在 (FX_SPREAD)
+   期望值: 不存在
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 7423960_12_SCB.(3)
+   期望值: 7423960_12_SCB.(4)
+
+6. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+   原始值: 7423960_12_SCB.(3)
+   期望值: 7423960_12_SCB.(4)
+
+7. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='MARKETER']
+   原始值: 不存在
+   期望值: 存在 (fieldId:1024, fieldIndex:33, 空值)
+
+8. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+   原始值: 549300U3YSKW7QY13Y70
+   期望值: 549300EHVAB7PJ11OV18
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+   原始值: GBLL6191629
+   期望值: 空
+
+10. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeType
+    原始值: brokerFee
+    期望值: 不存在
+
+11. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeCurrency
+    原始值: USD
+    期望值: 不存在
+
+12. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 空
+    期望值: 不存在
+
+13. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/receiverPartyReference
+    原始值: href="#broker_ref"
+    期望值: href="#broker_ref" (但broker_ref在期望XML中不存在)
+
+14. /trades/trade/tradeBody/fxOption
+    原始值: 存在 (期权交易)
+    期望值: 不存在
+
+15. /trades/trade/tradeBody/fxSpotForward
+    原始值: 不存在
+    期望值: 存在 (外汇即期远期交易)
+
+16. /trades/trade/tradeBody/fxSpotForward/currency1Flow/payerPartyReference
+    期望值: href="#their_custy_ref" (支付方为对手方)
+
+17. /trades/trade/tradeBody/fxSpotForward/currency1Flow/receiverPartyReference
+    期望值: href="#our_custy_ref" (接收方为我方)
+
+18. /trades/trade/tradeBody/fxSpotForward/currency1Flow/date
+    期望值: 20250929
+
+19. /trades/trade/tradeBody/fxSpotForward/currency1Flow/currency
+    期望值: EUR
+
+20. /trades/trade/tradeBody/fxSpotForward/currency1Flow/amount
+    期望值: 11100000
+
+21. /trades/trade/tradeBody/fxSpotForward/currency1Flow/fxCls
+    期望值: no
+
+22. /trades/trade/tradeBody/fxSpotForward/currency2Flow/payerPartyReference
+    期望值: href="#our_custy_ref" (支付方为我方)
+
+23. /trades/trade/tradeBody/fxSpotForward/currency2Flow/receiverPartyReference
+    期望值: href="#their_custy_ref" (接收方为对手方)
+
+24. /trades/trade/tradeBody/fxSpotForward/currency2Flow/date
+    期望值: 20250929
+
+25. /trades/trade/tradeBody/fxSpotForward/currency2Flow/currency
+    期望值: JPY
+
+26. /trades/trade/tradeBody/fxSpotForward/currency2Flow/amount
+    期望值: 1914583500
+
+27. /trades/trade/tradeBody/fxSpotForward/currency2Flow/fxCls
+    期望值: no
+
+28. /trades/trade/tradeBody/fxSpotForward/exchangeRate/rate
+    期望值: 172.485
+
+29. /trades/trade/tradeBody/fxSpotForward/forwardDelivery
+    期望值: forward
+
+30. /trades/trade/tradeBody/fxSpotForward/spotDate
+    期望值: 20250902
+
+7429115_4_SCB.(1)_2409402.(1).xml_original
+
+XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: JOSEPHT
+
+2. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: JOSEPHT
+
+3. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90415901
+   期望值: 7429115_4_SCB.(1)
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:GUNTJCA81C7IHNBGI392GBR240
+   期望值: RTN:GUNTJCA81C7IHNBGI392GBR742
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9400
+   期望值: RTN:9116
+
+7. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+8. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+   原始值: 2409402.(1)
+   期望值: 7429115_4_SCB.(1)
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+   原始值: GUNTJCA81C7IHNBGI392
+   期望值: 空
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: GBLL6195295
+    期望值: 空
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 7S6O0HR48AGBLL6195295
+    期望值: GBLL6195295
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250903122659.590073
+    期望值: 20250903104529.278000
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (7S6O0HR48AGBLL6195295-1)
+    期望值: 不存在
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 2011803
+
+16. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 564.0
+    期望值: 497
+
+17. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    原始值: clearerFee
+    期望值: 7
+
+18. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    原始值: 0
+    期望值: 空
+
+19. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/optionHolderReference
+    原始值: href="#our_custy_ref" (我方持有期权)
+    期望值: href="#their_custy_ref" (对手方持有期权)
+
+20. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/optionWriterReference
+    原始值: href="#their_custy_ref" (对手方写入期权)
+    期望值: href="#our_custy_ref" (我方写入期权)
+
+21. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    原始值: 不存在
+    期望值: USD
+
+22. /trades/trade/tradeBody/fxOption/fxVanillaOption/callCurrencyAmount/currency
+    原始值: EUR
+    期望值: USD
+
+23. /trades/trade/tradeBody/fxOption/fxVanillaOption/callCurrencyAmount/amount
+    原始值: 50000000
+    期望值: 57475000
+
+24. /trades/trade/tradeBody/fxOption/fxVanillaOption/putCurrencyAmount/currency
+    原始值: USD
+    期望值: EUR
+
+25. /trades/trade/tradeBody/fxOption/fxVanillaOption/putCurrencyAmount/amount
+    原始值: 59275000
+    期望值: 50000000
+
+26. /trades/trade/tradeBody/fxOption/fxVanillaOption/fxStrike/exchangeRate/rate
+    原始值: 1.1855
+    期望值: 1.1495
+
+27. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/flow/payerPartyReference
+    原始值: href="#our_custy_ref" (我方支付)
+    期望值: href="#their_custy_ref" (对手方支付)
+
+28. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/flow/receiverPartyReference
+    原始值: href="#their_custy_ref" (对手方接收)
+    期望值: href="#our_custy_ref" (我方接收)
+
+29. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    原始值: 0.39
+    期望值: 0
+
+30. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    原始值: 0
+    期望值: 0.
+
+31. /trades/trade/tradeInputConditions/inputBy
+    原始值: 不存在
+    期望值: 存在 (包含userName: JOSEPHT)
+
+7429115_4_SCB.(3)_2409402.(3).xml
+
+  XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: JOSEPHT
+
+2. /trades/trade/parties/party[@id='broker_ref']
+   原始值: 不存在
+   期望值: 存在 (GFI/LDN)
+
+3. /trades/trade/tradeHeader/tradeCategory/tradeGroup
+   原始值: FXD
+   期望值: OPT
+
+4. /trades/trade/tradeHeader/tradeCategory/tradeType
+   原始值: FXD
+   期望值: SMP
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: JOSEPHT
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/strategy
+   原始值: 不存在
+   期望值: FX_RREV
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90415901
+   期望值: 7429115_4_SCB.(3)
+
+8. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+9. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:GUNTJCA81C7IHNBGI392GBR240
+   期望值: RTN:GUNTJCA81C7IHNBGI392GBR742
+
+10. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+    原始值: RTN:9400
+    期望值: RTN:9116
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+    原始值: 33
+    期望值: 1
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+    原始值: 2409402.(3)
+    期望值: 7429115_4_SCB.(3)
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    原始值: GUNTJCA81C7IHNBGI392
+    期望值: 空
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: GBLH335189tolong530327
+    期望值: 空
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 空
+    期望值: GBLL6195295
+
+16. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250903122659.590073
+    期望值: 20250903104529.278000
+
+17. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+18. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (空值)
+    期望值: 不存在
+
+19. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 2011803
+
+20. /trades/trade/tradeHeader/tradeFees
+    原始值: 不存在
+    期望值: 存在 (包含两个tradeFee条目)
+
+21. /trades/trade/tradeBody/fxSpotForward
+    原始值: 存在 (外汇即期远期交易)
+    期望值: 不存在
+
+22. /trades/trade/tradeBody/fxOption
+    原始值: 不存在
+    期望值: 存在 (期权交易)
+
+23. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/optionHolderReference
+    期望值: href="#our_custy_ref" (我方持有期权)
+
+24. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/optionWriterReference
+    期望值: href="#their_custy_ref" (对手方写入期权)
+
+25. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    期望值: USD
+
+26. /trades/trade/tradeBody/fxOption/fxVanillaOption/callCurrencyAmount/currency
+    期望值: EUR
+
+27. /trades/trade/tradeBody/fxOption/fxVanillaOption/callCurrencyAmount/amount
+    期望值: 50000000
+
+28. /trades/trade/tradeBody/fxOption/fxVanillaOption/putCurrencyAmount/currency
+    期望值: USD
+
+29. /trades/trade/tradeBody/fxOption/fxVanillaOption/putCurrencyAmount/amount
+    期望值: 59275000
+
+30. /trades/trade/tradeBody/fxOption/fxVanillaOption/fxStrike/exchangeRate/rate
+    期望值: 1.1855
+
+31. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/flow/payerPartyReference
+    期望值: href="#our_custy_ref" (我方支付)
+
+32. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/flow/receiverPartyReference
+    期望值: href="#their_custy_ref" (对手方接收)
+
+33. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/flow/currency
+    期望值: USD
+
+34. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/flow/amount
+    期望值: 195000
+
+35. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    期望值: 0
+
+36. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    期望值: 0
+
+7429115_4_SCB.(4)_2409402.(2).xml
+
+XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: JOSEPHT
+
+2. /trades/trade/parties/party[@id='broker_ref']
+   原始值: 存在 (GFI/LDN)
+   期望值: 不存在
+
+3. /trades/trade/tradeHeader/tradeCategory/tradeGroup
+   原始值: OPT
+   期望值: FXD
+
+4. /trades/trade/tradeHeader/tradeCategory/tradeType
+   原始值: SMP
+   期望值: FXD
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: JOSEPHT
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/strategy
+   原始值: FX_RREV
+   期望值: 不存在
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90415901
+   期望值: 7429115_4_SCB.(4)
+
+8. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+9. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:GUNTJCA81C7IHNBGI392GBR240
+   期望值: RTN:GUNTJCA81C7IHNBGI392GBR742
+
+10. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+    原始值: RTN:9400
+    期望值: RTN:9116
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+    原始值: 33
+    期望值: 1
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+    原始值: 2409402.(2)
+    期望值: 7429115_4_SCB.(4)
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='MARKETER']
+    原始值: 不存在
+    期望值: 存在 (fieldId:1024, fieldIndex:33, 空值)
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    原始值: GUNTJCA81C7IHNBGI392
+    期望值: 空
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: GBLL6195296
+    期望值: 空
+
+16. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 7S6O0HR48AGBLL6195296
+    期望值: GBLL6195295
+
+17. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250903122659.590073
+    期望值: 20250903104529.278000
+
+18. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+19. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (7S6O0HR48AGBLL6195296-1)
+    期望值: 不存在
+
+20. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 2011803
+
+21. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeType
+    原始值: brokerFee
+    期望值: 不存在
+
+22. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeCurrency
+    原始值: USD
+    期望值: 不存在
+
+23. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 空
+    期望值: 不存在
+
+24. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    原始值: clearerFee
+    期望值: 7
+
+25. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    原始值: 0
+    期望值: 空
+
+26. /trades/trade/tradeBody/fxOption
+    原始值: 存在 (期权交易)
+    期望值: 不存在
+
+27. /trades/trade/tradeBody/fxSpotForward
+    原始值: 不存在
+    期望值: 存在 (外汇即期远期交易)
+
+28. /trades/trade/tradeBody/fxSpotForward/currency1Flow/payerPartyReference
+    期望值: href="#our_custy_ref" (我方支付)
+
+29. /trades/trade/tradeBody/fxSpotForward/currency1Flow/receiverPartyReference
+    期望值: href="#their_custy_ref" (对手方接收)
+
+30. /trades/trade/tradeBody/fxSpotForward/currency1Flow/date
+    期望值: 20251006
+
+31. /trades/trade/tradeBody/fxSpotForward/currency1Flow/currency
+    期望值: EUR
+
+32. /trades/trade/tradeBody/fxSpotForward/currency1Flow/amount
+    期望值: 25000000
+
+33. /trades/trade/tradeBody/fxSpotForward/currency1Flow/fxCls
+    期望值: no
+
+34. /trades/trade/tradeBody/fxSpotForward/currency2Flow/payerPartyReference
+    期望值: href="#their_custy_ref" (对手方支付)
+
+35. /trades/trade/tradeBody/fxSpotForward/currency2Flow/receiverPartyReference
+    期望值: href="#our_custy_ref" (我方接收)
+
+36. /trades/trade/tradeBody/fxSpotForward/currency2Flow/date
+    期望值: 20251006
+
+37. /trades/trade/tradeBody/fxSpotForward/currency2Flow/currency
+    期望值: USD
+
+38. /trades/trade/tradeBody/fxSpotForward/currency2Flow/amount
+    期望值: 29172500
+
+39. /trades/trade/tradeBody/fxSpotForward/currency2Flow/fxCls
+    期望值: no
+
+40. /trades/trade/tradeBody/fxSpotForward/exchangeRate/rate
+    期望值: 1.1669
+
+41. /trades/trade/tradeBody/fxSpotForward/forwardDelivery
+    期望值: forward
+
+42. /trades/trade/tradeBody/fxSpotForward/spotDate
+    期望值: 20250903
+
+43. /trades/trade/tradeInputConditions/inputBy
+    原始值: 不存在
+    期望值: 存在 (包含userName: JOSEPHT)
+
+7431822_14_SCB.(1)_2409410.(2).xml
+
+ XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: ANOOPR
+
+2. /trades/trade/parties/party[@id='broker_ref']/partyName
+   原始值: GFI/LDN
+   期望值: GFIGR/SIN
+
+3. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: ANOOPR
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90470964
+   期望值: 7431822_14_SCB.(1)
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:GUNTJCA81C7IHNBGI392GBR240
+   期望值: RTN:GUNTJCA81C7IHNBGI392GBR743
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9408
+   期望值: RTN:1823
+
+8. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+   原始值: 2409410.(2)
+   期望值: 7431822_14_SCB.(1)
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    原始值: GUNTJCA81C7IHNBGI392
+    期望值: 空
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: GBLL6197198
+    期望值: 空
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 7S6O0HR48AGBLL6197198
+    期望值: GBLL6197197
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250904094416.950004
+    期望值: 20250904083644.549600
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (7S6O0HR48AGBLL6197198-2)
+    期望值: 不存在
+
+16. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 1628127
+
+17. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 空
+    期望值: 255
+
+18. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    原始值: clearerFee
+    期望值: 7
+
+19. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    原始值: 0
+    期望值: 空
+
+20. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    原始值: 不存在
+    期望值: USD
+
+21. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    原始值: 0.06
+    期望值: 0
+
+22. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    原始值: 0
+    期望值: 0.
+
+23. /trades/trade/tradeInputConditions/inputBy
+    原始值: 不存在
+    期望值: 存在 (包含userName: ANOOPR)
+
+7431822_14_SCB.(3)_2409410.(1).xml
+
+ XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: ANOOPR
+
+2. /trades/trade/parties/party[@id='broker_ref']/partyName
+   原始值: GFI/LDN
+   期望值: GFIGR/SIN
+
+3. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: ANOOPR
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90470964
+   期望值: 7431822_14_SCB.(3)
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:GUNTJCA81C7IHNBGI392GBR240
+   期望值: RTN:GUNTJCA81C7IHNBGI392GBR743
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9408
+   期望值: RTN:1823
+
+8. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+   原始值: 2409410.(1)
+   期望值: 7431822_14_SCB.(3)
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    原始值: GUNTJCA81C7IHNBGI392
+    期望值: 空
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: GBLL6197197
+    期望值: 空
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 7S6O0HR48AGBLL6197197
+    期望值: GBLL6197197
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250904094416.950004
+    期望值: 20250904083644.549600
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+
+    原始值: 存在 (7S6O0HR48AGBLL6197197-2)
+    期望值: 不存在
+
+16. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 1628127
+
+17. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    原始值: 0.0
+    期望值: 空
+
+18. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    原始值: clearerFee
+    期望值: 7
+
+19. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    原始值: 0
+    期望值: 空
+
+20. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    原始值: 不存在
+    期望值: USD
+
+21. /trades/trade/tradeBody/fxOption/fxVanillaOption/fxStrike/exchangeRate/rate
+    原始值: 148.00
+    期望值: 148
+
+22. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    原始值: 0.1075
+    期望值: 0
+
+23. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    原始值: 0
+    期望值: 0.
+
+24. /trades/trade/tradeInputConditions/inputBy
+    原始值: 不存在
+    期望值: 存在 (包含userName: ANOOPR)
+
+
+7431822_14_SCB.(4)_2409410.(3).xml
+
+XML差异报告 - 路径格式
+
+1. /events/mainEvent/inputBy/userName
+   原始值: Shilpi Clerk
+   期望值: ANOOPR
+
+2. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   原始值: Shilpi Clerk
+   期望值: ANOOPR
+
+3. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   原始值: 90470964
+   期望值: 7431822_14_SCB.(4)
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   原始值: 存在 (GuichengZhang@sc.com)
+   期望值: 不存在
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   原始值: RTN:GUNTJCA81C7IHNBGI392GBR240
+   期望值: RTN:GUNTJCA81C7IHNBGI392GBR743
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   原始值: RTN:9408
+   期望值: RTN:1823
+
+7. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   原始值: 33
+   期望值: 1
+
+8. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+   原始值: 2409410.(3)
+   期望值: 7431822_14_SCB.(4)
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='MARKETER']
+   原始值: 不存在
+   期望值: 存在 (fieldId:1024, fieldIndex:33, 空值)
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    原始值: GUNTJCA81C7IHNBGI392
+    期望值: 空
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    原始值: GBLH335191tolong530327
+    期望值: 空
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    原始值: 空
+    期望值: GBLL6197197
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    原始值: 20250904094416.950004
+    期望值: 20250904083644.549600
+
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    原始值: 不存在
+    期望值: 存在 (空值)
+
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    原始值: 存在 (空值)
+    期望值: 不存在
+
+16. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    原始值: 1604901
+    期望值: 1628127
+
+17. /trades/trade/tradeHeader/tradeFees
+    原始值: 不存在
+    期望值: 存在 (包含两个tradeFee条目)
+
+18. /trades/trade/tradeBody/fxSpotForward/currency1Flow/fxCls
+    原始值: 不存在
+    期望值: no
+
+19. /trades/trade/tradeBody/fxSpotForward/currency2Flow/fxCls
+    原始值: 不存在
+    期望值: no
+
+20. /trades/trade/tradeBody/fxSpotForward/forwardDelivery
+    原始值: 不存在
+    期望值: forward
+
+21. /trades/trade/tradeBody/fxSpotForward/spotDate
+    原始值: 不存在
+    期望值: 20250904
+
+22. /trades/trade/tradeInputConditions/inputBy/userName
+    原始值: Shilpi Clerk
+    期望值: ANOOPR
