@@ -1,0 +1,151 @@
+XML Difference Report - Path Format Logic
+
+
+1. /events/mainEvent/inputBy/userName
+   RTNS Value: /FpML/SCTrader
+   GFI Value:  /FixML/userName
+   ***Reason: static mapping***
+   
+2. /trades/trade/parties/party[@id='broker_ref']/partyName
+   RTNS Value: /FpML/CounterpartyId
+   GFI Value:  /FixML/custy_partyName
+   ***Reason: static mapping***
+
+3. /trades/trade/tradeHeader/tradeDate
+   RTNS Value: /FpML/TradeDate
+   GFI Value:  /FixML/tradeDate
+   ******
+
+4. /trades/trade/tradeHeader/tradeViews/tradeView[1]/userName
+   RTNS Value: Shilpi Clerk
+   GFI Value: PEIYING
+   ***Reason: static mapping***
+
+5. /trades/trade/tradeHeader/tradeViews/tradeView[1]/tradeId/tradeExternalId
+   RTNS Value: /FpML/TradeExternalId
+   GFI Value:  /FixML/tradeExternalId
+   ***Reason: TRACKING_ID***
+
+6. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='0']
+   RTNS Value: *** /FpML/SCTrader comment[@index='0'] ***
+   GFI Value: missing
+   
+
+7. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='1']
+   RTNS Value: RTN:549300U3YSKW7QY13Y70GBR240 ***RTN: + rtnCode(/FpML/RtnValue).substring(0,26)***
+   GFI Value: RTN:549300U3YSKW7QY13Y70GBR742  ***RTN: + /FixML/Rtn1Value + /FixML/Rtn2Value***  
+   
+
+8. /trades/trade/tradeHeader/tradeViews/tradeView[1]/comments/comment[@index='2']
+   RTNS Value: RTN:9396 ***RTNHead + rtnCode.substring(26, rtnCode.length())***
+   GFI Value: RTN:3961  rtnCode.substring(26, rtnCode.length())***
+   
+
+9. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldIndex
+   RTNS Value: 33 ***FIXED_VALUE***
+   GFI Value: 1   ***FIXED_VALUE***
+   
+   
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXT_REF_NB']/fieldValue
+    RTNS Value: 2409398.(2)  /FpML/Leg/ExtReference
+    GFI Value: 7423960_12_SCB.(1)         /FixML/tradeExternalId
+	******
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRAN_ID']/fieldValue
+    RTNS Value: /FpML/Leg/Mifid2_VenueTransactionID
+    GFI Value:  /FixML/Mifid2_VenueTransactionID
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_TIME']/fieldValue
+    RTNS Value: /FpML/Mifid2_ExecutionDateTime
+    GFI Value:  /FixML/Mifid2_ExecutionDateTime
+
+13. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='TRADER_ID']/fieldValue
+    RTNS Value:    /FpML/SCTrader
+    GFI Value:     /FixML/userName
+	
+14. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='EXE_ID']
+    RTNS Value: /FpML/Leg/Mifid2_ExecutionLinkID
+    GFI Value: missing        
+	
+15. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='WAIVER_IND']
+    RTNS Value: missing
+    GFI Value: exist (empty value) /FixML/Mifid2_WaiverIND /FixML/tradeExternalId **static_mapping**;
+
+16. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='0']/feeAmount
+    RTNS Value: /FpML/Leg/BrokerfeeAmount
+    GFI Value:  /FixML/feeAmount
+
+17. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeType
+    RTNS Value:  FIXED_VALUE(clearerFee)
+    GFI Value:  /FixML/feeType
+
+18. /trades/trade/tradeHeader/tradeFees/tradeFee[@index='1']/feeAmount
+    RTNS Value: /FpML/Leg/BrokerfeeAmount
+    GFI Value:   FIXED_VALUE(empty value)
+
+19. /trades/trade/tradeBody/fxOption/fxVanillaOption/option/payoutCurrency
+    RTNS Value: /FpML/Leg/SettlementCurrency
+    GFI Value:  /FixML/LegElement/payoutCurrency
+
+20. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/priceRate
+    RTNS Value: /FpML/Leg/premiumValue
+    GFI Value:  /FixML/LegElement/SettlementpriceRate
+
+21. /trades/trade/tradeBody/fxOption/settlement/settlementFlow/price/Margin
+    RTNS Value: FIXED_VALUE (0)
+    GFI Value:  FIXED_VALUE (0.)
+
+22. /trades/trade/tradeInputConditions/inputBy
+    RTNS Value: /FpML/SCTrader
+    GFI Value:  /FixML/userName
+
+23. /trades/trade/tradeInputConditions/systemDate
+    RTNS Value: /FpML/TradeDate
+    GFI Value:  /FixML/tradeDate
+
+
+
+
+
+
+10. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='MARKETER'] 
+    RTNS Value: missing
+    GFI Value: ***FIXED_VALUE*** (fieldId:1024, fieldIndex:33, empty value)
+	
+
+11. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_NSPACE']/fieldValue
+    RTNS Value: /FpML/Leg/UsiNameSpace
+    GFI Value:  /FixML/LegElement/UsiNameSpace_NDFFX
+
+12. /trades/trade/tradeHeader/tradeUserDefinedFields/userDefinedField[fieldLabel='USI_VALUE']/fieldValue
+    RTNS Value: /FixML/LegElement/UsiNameSpace_NDFFX
+    GFI Value:  /FpML/Leg/UsiValue
+
+
+19. /trades/trade/tradeBody/fxSpotForward/currency1Flow/fxCls
+    RTNS Value: missing
+    GFI Value: ***FIXED_VALUE no***
+
+20. /trades/trade/tradeBody/fxSpotForward/currency2Flow/fxCls
+    RTNS Value: missing
+    GFI Value: ***FIXED_VALUE no***
+
+21. /trades/trade/tradeBody/fxSpotForward/forwardDelivery
+    RTNS Value: missing
+    GFI Value: ***FIXED_VALUE forward***
+	
+
+22. /trades/trade/tradeBody/fxSpotForward/spotDate
+    RTNS Value: ***missing
+    GFI Value:  ***/FixML/spotDate
+
+21. /trades/trade/tradeBody/fxOption/fxVanillaOption/fxStrike/exchangeRate/rate
+    RTNS Value: /FpML/Leg/StrikePriceRate
+    GFI Value:  /FixML/LegElement/HedgeRate
+
+17. /trades/trade/tradeHeader/tradeFees
+    RTNS Value: missing in hedge, exist in vanilla
+    GFI Value: exist (including two tradeFee items)
+
+
+
