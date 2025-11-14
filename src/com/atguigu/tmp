@@ -1,24 +1,114 @@
-private Path resolveSecurePath(Path baseDir, String fileName) {
-    // 验证文件名
-    if (fileName == null || fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
-        throw new SecurityException("Invalid file name: " + fileName);
-    }
-    
-    Path resolvedPath = baseDir.resolve(fileName).normalize();
-    
-    // 安全检查
-    if (!resolvedPath.startsWith(baseDir)) {
-        throw new SecurityException("Path traversal detected: " + fileName);
-    }
-    
-    return resolvedPath;
-}
+// 原代码（会报错）
+File uvtTmpDateFolder = new File(uvtTempFolder.getAbsolutePath()
+		+ File.separator
+		+ DateFormatUtils.ISO_DATE_FORMAT.format(new Date()));
 
-private File createSecureFolder(Path baseDir, String folderName) {
-    Path folderPath = resolveSecurePath(baseDir, folderName);
-    File folder = folderPath.toFile();
-    if (!folder.exists()) {
-        folder.mkdirs();
-    }
-    return folder;
+// 修复后
+String dateFolderName = DateFormatUtils.ISO_DATE_FORMAT.format(new Date());
+Path uvtTmpDatePath = uvtTempFolder.toPath().resolve(dateFolderName).normalize();
+if (!uvtTmpDatePath.startsWith(uvtTempFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in date folder path");
 }
+File uvtTmpDateFolder = uvtTmpDatePath.toFile();
+
+
+
+// 原代码（会报错）
+File expectedMxml = new File(expectedMxmlFolder.getAbsolutePath()
+		+ File.separator + externalId + ".xml");
+
+// 修复后
+Path expectedMxmlPath = expectedMxmlFolder.toPath().resolve(externalId + ".xml").normalize();
+if (!expectedMxmlPath.startsWith(expectedMxmlFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in expected MXML path: " + externalId);
+}
+File expectedMxml = expectedMxmlPath.toFile();
+
+
+
+
+// 原代码（会报错）
+String generatedMxmlPath = uvtTmpDateFolder.getAbsolutePath()
+		+ File.separator + externalId + ".generated.xml";
+
+// 修复后
+Path generatedPath = uvtTmpDateFolder.toPath().resolve(externalId + ".generated.xml").normalize();
+if (!generatedPath.startsWith(uvtTmpDateFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in generated MXML path: " + externalId);
+}
+String generatedMxmlPath = generatedPath.toString();
+
+
+
+
+
+// 原代码（会报错）
+expectedMxmlPath = uvtTmpDateFolder.getAbsolutePath()
+		+ File.separator + externalId + ".expected.xml";
+
+// 修复后
+Path expectedBackupPath = uvtTmpDateFolder.toPath().resolve(externalId + ".expected.xml").normalize();
+if (!expectedBackupPath.startsWith(uvtTmpDateFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in expected backup path: " + externalId);
+}
+expectedMxmlPath = expectedBackupPath.toString();
+
+
+
+
+
+// 原代码（会报错）
+String originalMsgPath = uvtTmpDateFolder.getAbsolutePath()
+		+ File.separator + "original." + gid + ".xml";
+
+// 修复后
+Path originalMsgFilePath = uvtTmpDateFolder.toPath().resolve("original." + gid + ".xml").normalize();
+if (!originalMsgFilePath.startsWith(uvtTmpDateFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in original message path: " + gid);
+}
+String originalMsgPath = originalMsgFilePath.toString();
+
+
+
+
+
+
+
+
+// 原代码（会报错）
+String inputFpmlPath = uvtTmpDateFolder.getAbsolutePath()
+		+ File.separator + externalId + ".input.xml";
+
+// 修复后
+Path inputFpmlFilePath = uvtTmpDateFolder.toPath().resolve(externalId + ".input.xml").normalize();
+if (!inputFpmlFilePath.startsWith(uvtTmpDateFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in input FPML path: " + externalId);
+}
+String inputFpmlPath = inputFpmlFilePath.toString();
+
+
+
+
+
+
+
+
+// 原代码（会报错）
+IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS,
+		new FileOutputStream(uvtTmpDateFolder.getAbsolutePath()
+				+ File.separator + externalId + ".comparison.txt"));
+
+// 修复后
+Path comparisonFilePath = uvtTmpDateFolder.toPath().resolve(externalId + ".comparison.txt").normalize();
+if (!comparisonFilePath.startsWith(uvtTmpDateFolder.toPath())) {
+    throw new SecurityException("Path traversal detected in comparison file path: " + externalId);
+}
+IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS,
+    new FileOutputStream(comparisonFilePath.toString()));
+
+
+
+
+
+
+
