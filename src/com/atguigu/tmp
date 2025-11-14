@@ -1,211 +1,24 @@
-package com.scb.mxg.mls.rt.gfi.processor;
+private Path resolveSecurePath(Path baseDir, String fileName) {
+    // 验证文件名
+    if (fileName == null || fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+        throw new SecurityException("Invalid file name: " + fileName);
+    }
+    
+    Path resolvedPath = baseDir.resolve(fileName).normalize();
+    
+    // 安全检查
+    if (!resolvedPath.startsWith(baseDir)) {
+        throw new SecurityException("Path traversal detected: " + fileName);
+    }
+    
+    return resolvedPath;
+}
 
-import com.scb.mxg.mls.rt.gfi.lookup.StaticDataDict;
-import com.scb.mxg.mls.rt.gfi.utils.RegressionAssist;
-import com.scb.mxg.mls.rt.gfi.utils.XmlUtils;
-import com.scb.mxg.mls.rt.gfi.vo.Email;
-import com.scb.mxg.mls.utils.XPathParser;
-import org.apache.camel.Exchange;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmlunit.builder.DiffBuilder;
-import org.xmlunit.builder.Input;
-import org.xmlunit.diff.Diff;
-import org.xmlunit.diff.Difference;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.*;
-
-public final class UvtProcessor extends BaseProcessor {
-
-	private final static Logger LOG = LoggerFactory
-			.getLogger(UvtProcessor.class);
-
-	private File expectedMxmlFolder;
-
-	private File uvtTempFolder;
-
-	public UvtProcessor() {
-		expectedMxmlFolder = new File(System.getProperty("root_dir")
-				+ File.separator + "uvt_expected");
-		if (!expectedMxmlFolder.exists()) {
-			expectedMxmlFolder.mkdirs();
-		}
-		LOG.info("regression expected mxml folder: {}",
-				expectedMxmlFolder.getAbsolutePath());
-
-		uvtTempFolder = new File(System.getProperty("root_dir")
-				+ File.separator + "uvt_temp");
-		if (!uvtTempFolder.exists()) {
-			uvtTempFolder.mkdirs();
-		}
-		LOG.info("uvt temp folder: {}", uvtTempFolder.getAbsolutePath());
-	}
-
-	@Override
-	public void handleExchange(Exchange exchange) throws Exception {
-		LOG.info("********* UVT Start *********");
-		File uvtTmpDateFolder = new File(uvtTempFolder.getAbsolutePath()
-				+ File.separator
-				+ DateFormatUtils.ISO_DATE_FORMAT.format(new Date()));
-		if (!uvtTmpDateFolder.exists()) {
-			uvtTmpDateFolder.mkdirs();
-		}
-		String singleLegFixML = StringUtils.trimToEmpty(exchange.getIn().getBody(
-				String.class));
-		XPathParser intraXmlParser = new XPathParser(singleLegFixML);
-		String legType = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegType"));
-		String tradeExternalId = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeExternalId"));
-		String maxLegVal = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.MaxLegVal"));
-		String legID =intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegID"));
-		String legSubID=intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegSubID"));
-		String externalId = getFullTradeId(tradeExternalId,legType,maxLegVal,legID,legSubID);
-
-		LOG.info(externalId);
-
-		// transform
-		transformStages(exchange, singleLegFixML);
-		Set<String> errors = StaticDataDict.getErrorList();
-
-		// ================= compare =================
-		Email email = new Email();
-		String mxml = exchange.getIn().getBody(String.class);
-		File expectedMxml = new File(expectedMxmlFolder.getAbsolutePath()
-				+ File.separator + externalId + ".xml");
-
-		String expectedMxmlPath = "";
-
-		// save generated mxml
-		String generatedMxmlPath = uvtTmpDateFolder.getAbsolutePath()
-				+ File.separator + externalId + ".generated.xml";
-		IOUtils.write(mxml, new FileOutputStream(generatedMxmlPath), "UTF-8");
-
-		if (expectedMxml.exists()) {
-			List<String> differenceList = new ArrayList<String>();
-			String expectedMxmlStr = FileUtils.readFileToString(expectedMxml,
-					"UTF-8");
-
-			// save expected file
-			expectedMxmlPath = uvtTmpDateFolder.getAbsolutePath()
-					+ File.separator + externalId + ".expected.xml";
-			IOUtils.write(expectedMxmlStr, new FileOutputStream(
-					expectedMxmlPath), "UTF-8");
-
-			Diff diff = DiffBuilder
-					.compare(
-							Input.fromString(StringUtils.trim(XmlUtils
-									.formatXml(expectedMxmlStr))))
-					.withTest(
-							Input.fromString(StringUtils.trim(XmlUtils
-									.formatXml(mxml)))).build();
-			if (diff.hasDifferences()) {
-				Iterator<Difference> differences = diff.getDifferences()
-						.iterator();
-				Difference difference = null;
-				while (differences.hasNext()) {
-					difference = differences.next();
-					differenceList.add(difference.toString());
-				}
-
-				email.getContents().add("ID:&nbsp;&nbsp; " + externalId);
-				email.getContents().add("<br/>");
-				email.getContents().add("Status:&nbsp;&nbsp; <b>diff</b>");
-				email.getContents().add("<br/>");
-				email.getContents().add(" ");
-				email.getContents().add("<br/>");
-				email.getContents().add("Difference: ");
-				email.getContents().add("<br/>");
-				email.getContents().add("<ul>");
-
-				for (String str : differenceList) {
-					email.getContents().add("<li>" + str + "</li>");
-				}
-				email.getContents().add("</ul>");
-				RegressionAssist.addRegressionResult(new RegressionAssist.RegressionResult(
-						externalId, "diff", StringUtils.join(
-						differenceList.toArray(), "\n")));
-			} else {
-				email.getContents().add("ID:&nbsp;&nbsp; " + externalId);
-				email.getContents().add("<br/>");
-				email.getContents().add("Status:&nbsp;&nbsp; <b>matched</b>");
-				email.getContents().add("<br/>");
-				RegressionAssist.addRegressionResult(new RegressionAssist.RegressionResult(
-						externalId, "match", ""));
-			}
-		} else {
-			email.getContents().add("ID:&nbsp;&nbsp; " + externalId);
-			email.getContents().add("<br/>");
-			email.getContents().add("Status:&nbsp;&nbsp; <b>diff</b>");
-			email.getContents().add("<br/>");
-			email.getContents().add(" ");
-			email.getContents().add("<br/>");
-			email.getContents().add("Difference: ");
-			email.getContents().add("<br/>");
-			email.getContents().add("<ul>");
-			email.getContents().add(
-					"<li>excepted file is not existing: "
-							+ expectedMxml.getAbsolutePath() + "</li>");
-			email.getContents().add("</ul>");
-			email.getContents().add("<br/>");
-			RegressionAssist.addRegressionResult(new RegressionAssist.RegressionResult(
-					externalId, "failed", "excepted file is not existing: "
-					+ expectedMxml.getAbsolutePath()));
-		}
-		if (CollectionUtils.isNotEmpty(errors)) {
-			email.getContents().add(" ");
-			email.getContents().add("<br/>");
-			email.getContents().add("Remark: ");
-			email.getContents().add("<br/>");
-			email.getContents().add("<ul>");
-
-			for (String str : errors) {
-				email.getContents().add("<li>" + str + "</li>");
-			}
-			email.getContents().add("</ul>");
-			email.getContents().add("<br/>");
-		}
-		email.getContents().add(" ");
-
-		// save orginal message
-		String orignalMsg = exchange.getProperty("originalMsg", String.class);
-		XPathParser originalMsgParser = new XPathParser(orignalMsg);
-		String gid = originalMsgParser.evaluate("/deal/gid_id");
-		String originalMsgPath = uvtTmpDateFolder.getAbsolutePath()
-				+ File.separator + "original." + gid + ".xml";
-		IOUtils.write(orignalMsg, new FileOutputStream(originalMsgPath),
-				"UTF-8");
-
-		// save input fpml file
-		String inputFpmlPath = uvtTmpDateFolder.getAbsolutePath()
-				+ File.separator + externalId + ".input.xml";
-		IOUtils.write(singleLegFixML, new FileOutputStream(inputFpmlPath), "UTF-8");
-
-		// save comparison result
-		IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS,
-				new FileOutputStream(uvtTmpDateFolder.getAbsolutePath()
-						+ File.separator + externalId + ".comparison.txt"));
-
-		email.getAttachments().add(originalMsgPath);
-		email.getAttachments().add(inputFpmlPath);
-		email.getAttachments().add(generatedMxmlPath);
-		if (StringUtils.isNoneBlank(expectedMxmlPath)) {
-			email.getAttachments().add(expectedMxmlPath);
-		}
-
-		// send result to mail
-		exchange.setProperty("email", email);
-		callProducer("freemarker:ftl/email4uvt.ftl?allowContextMapAll=true", exchange);
-		exchange.getIn().removeHeaders("*");
-		callProducer("mlsTunnelJmsC:topic:"
-				+ getAppProperty("mlsTunnle.t.email"), exchange);
-
-		LOG.info("********* UVT End *********");
-	}
-
+private File createSecureFolder(Path baseDir, String folderName) {
+    Path folderPath = resolveSecurePath(baseDir, folderName);
+    File folder = folderPath.toFile();
+    if (!folder.exists()) {
+        folder.mkdirs();
+    }
+    return folder;
 }
