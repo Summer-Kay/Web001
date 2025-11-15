@@ -122,6 +122,53 @@ try (OutputStream os = Files.newOutputStream(comparisonFilePath)) {
 }
 
 
+110
+Path expectedBackupPath = uvtTmpDateFolder.toPath().resolve(externalId + ".expected.xml").normalize();
+			if (!expectedBackupPath.startsWith(uvtTmpDateFolder.toPath())) {
+				throw new SecurityException("Path traversal detected in expected backup path: " + externalId);
+			}
+			IOUtils.write(expectedMxmlStr, new FileOutputStream(
+					expectedBackupPath.toString()), "UTF-8");
+
+
+195
+Path originalMsgFilePath = uvtTmpDateFolder.toPath().resolve("original." + gid + ".xml").normalize();
+		if (!originalMsgFilePath.startsWith(uvtTmpDateFolder.toPath())) {
+			throw new SecurityException("Path traversal detected in original message path: " + gid);
+		}
+		String originalMsgPath = originalMsgFilePath.toString();
+
+
+203
+Path inputFpmlFilePath = uvtTmpDateFolder.toPath().resolve(externalId + ".input.xml").normalize();
+if (!inputFpmlFilePath.startsWith(uvtTmpDateFolder.toPath())) {
+	throw new SecurityException("Path traversal detected in input FPML path: " + externalId);
+}
+String inputFpmlPath = inputFpmlFilePath.toString();
+IOUtils.write(singleLegFixML, new FileOutputStream(inputFpmlPath), "UTF-8");
+
+
+44
+File f = new File(outputFolder.getAbsolutePath() + File.separator
+				+ "GFI-" + new Date().getTime() + ".xls");
+
+126
+File f = new File(outputFolder.getAbsolutePath() + File.separator
+				+ "GFI-" + new Date().getTime() + ".csv");
 
 
 
+74 / 75
+uvtInputFolder = new File(System.getProperty("root_dir")
+                + File.separator + "regression_input");
+if(!uvtInputFolder.exists()) {
+    uvtInputFolder.mkdirs();
+}
+String filePath = uvtInputFolder.getPath() + "/generate_report.flag";
+File file = new File(filePath);
+
+
+104 / 105
+String mxml = exchange.getIn().getBody(String.class);
+FileUtils.write(new File(outputMxmlFolder.getAbsolutePath()+File.separator+externalId+".xml"),mxml);
+File expectedMxml = new File(expectedMxmlFolder.getAbsolutePath()
