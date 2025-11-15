@@ -108,6 +108,19 @@ IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS,
 
 
 
+Path baseDir = uvtTmpDateFolder.toPath();
+Path comparisonFilePath = baseDir.resolve(externalId + ".comparison.txt").normalize();
+
+// 再次检查是否仍在限定目录下
+if (!comparisonFilePath.toAbsolutePath().startsWith(baseDir.toAbsolutePath())) {
+    throw new SecurityException("Path traversal detected in comparison file path: " + externalId);
+}
+
+// 使用 NIO Files.newOutputStream 代替 FileOutputStream（Sonar 推荐）
+try (OutputStream os = Files.newOutputStream(comparisonFilePath)) {
+    IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS, os);
+}
+
 
 
 
