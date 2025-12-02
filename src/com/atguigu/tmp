@@ -46,3 +46,37 @@ public class XPathParserTest {
 
         // 删除多个节点
         parser.removeNode("/root/a");
+
+        String result = parser.getXmlContent();
+
+        // <a> 节点应该全部被移除
+        Assert.assertFalse(result.contains("<a>1</a>"));
+        Assert.assertFalse(result.contains("<a>2</a>"));
+        Assert.assertTrue(result.contains("<b>3</b>"));
+    }
+
+    @Test
+    public void testNamespaceAwareXpath() throws Exception {
+        // 测试 NamespaceContext，验证 XPathParser 中 lookupNamespaceURI 逻辑
+        String xml =
+                "<ns:root xmlns:ns=\"http://namespace.com\">" +
+                        "<ns:child>OK</ns:child>" +
+                "</ns:root>";
+
+        XPathParser parser = new XPathParser(xml);
+
+        // 使用 local-name() 不依赖命名空间 prefix
+        String value = parser.evaluate("/*[local-name()='root']/*[local-name()='child']");
+        Assert.assertEquals("OK", value);
+    }
+
+    @Test
+    public void testConstructorWithoutXml() throws Exception {
+        // 空构造 + 手动 init
+        XPathParser parser = new XPathParser();
+        XPathParser parser2 = new XPathParser("<x><y>hello</y></x>");
+
+        Assert.assertEquals("hello",
+                parser2.evaluate("/x/y"));
+    }
+}
