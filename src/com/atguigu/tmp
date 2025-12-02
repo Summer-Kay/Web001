@@ -1,181 +1,157 @@
-<dependency>
-    <groupId>org.mockito</groupId>
-    <artifactId>mockito-core</artifactId>
-    <version>3.12.4</version>
-    <scope>test</scope>
-</dependency>
-
-<dependency>
-    <groupId>org.powermock</groupId>
-    <artifactId>powermock-module-junit4</artifactId>
-    <version>2.0.9</version>
-    <scope>test</scope>
-</dependency>
-
-<dependency>
-    <groupId>org.powermock</groupId>
-    <artifactId>powermock-api-mockito2</artifactId>
-    <version>2.0.9</version>
-    <scope>test</scope>
-</dependency>
-
-
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        BaseProcessor.class,
-        StaticDataDict.class,
-        XPathParser.class
-})
-public class BaseProcessorTest {
-
-    private BaseProcessor processor;
-    private Exchange exchange;
-    private JdbcTemplate jdbcTemplate;
-    private TransactionTemplate txTemplate;
-
-    @Before
-    public void setup() throws Exception {
-
-        // mock Camel
-        exchange = Mockito.mock(Exchange.class);
-        Mockito.when(exchange.getPattern()).thenReturn(ExchangePattern.InOut);
-
-        // mock Jdbc
-        jdbcTemplate = Mockito.mock(JdbcTemplate.class);
-        txTemplate = Mockito.mock(TransactionTemplate.class);
-
-        // mock StaticDataDict
-        PowerMockito.mockStatic(StaticDataDict.class);
-        Mockito.when(StaticDataDict.getErrorList()).thenReturn(new HashSet<>());
-        Mockito.when(StaticDataDict.lookupTrader(Mockito.anyString())).thenReturn("T001");
-
-        // mock XPathParser
-        PowerMockito.whenNew(XPathParser.class)
-                .withAnyArguments()
-                .thenReturn(Mockito.mock(XPathParser.class));
-
-        // create processor (anonymous subclass)
-        processor = new BaseProcessor() {
-            @Override
-            public void handleExchange(Exchange exchange) throws Exception {
-                // simple stub
-                exchange.getIn().setBody("<test/>");
+package com.scb.mxg.mls.rt.gfi.processor;
+import com.scb.mxg.mls.rt.gfi.lookup.StaticDataDict;
+import com.scb.mxg.mls.rt.gfi.utils.RegressionAssist;
+import com.scb.mxg.mls.rt.gfi.utils.RegressionAssist.RegressionResult;
+import com.scb.mxg.mls.rt.gfi.utils.XPathParser;
+import com.scb.mxg.mls.rt.gfi.utils.XmlUtils;
+import org.apache.camel.Exchange;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.builder.Input;
+import org.xmlunit.diff.Diff;
+import org.xmlunit.diff.Difference;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+public final class RegressionTestProcessor extends BaseProcessor {
+    private final static Logger LOG = LoggerFactory
+            .getLogger(RegressionTestProcessor.class);
+    private File expectedMxmlFolder;
+    private File outputMxmlFolder;
+    private List<String> ignoreXpathList = new ArrayList<String>();
+    private File uvtInputFolder;
+    public RegressionTestProcessor() {
+        outputMxmlFolder = new File(System.getProperty("root_dir")
+                + File.separator + "regression_output");
+        if (!outputMxmlFolder.exists()) {
+            outputMxmlFolder.mkdirs();
+        }
+        LOG.info("regression output mxml folder: {}",
+                outputMxmlFolder.getAbsolutePath());
+        expectedMxmlFolder = new File(System.getProperty("root_dir")
+                + File.separator + "regression_expected");
+        if (!expectedMxmlFolder.exists()) {
+            expectedMxmlFolder.mkdirs();
+        }
+        LOG.info("regression expected mxml folder: {}",
+                expectedMxmlFolder.getAbsolutePath());
+        File xpathIgnoreConfigFile = new File(System.getProperty("root_dir")
+                + File.separator + "xpath_ignore.config");
+        LOG.info("xpath ignoring configuration file: {}",
+                xpathIgnoreConfigFile.getAbsolutePath());
+        if (xpathIgnoreConfigFile.exists()) {
+            try {
+                ignoreXpathList = FileUtils.readLines(xpathIgnoreConfigFile,
+                        "UTF-8");
+                LOG.info("below xpath will be ignored in mxml comparison");
+                LOG.info(ignoreXpathList.toString());
+            } catch (IOException e) {
+                LOG.info("load xpath ignoring config", e);
             }
-        };
-
-        processor.setMlsDbJdbcTemplate(jdbcTemplate);
-        processor.setMlsDbTransactionTemplate(txTemplate);
-
-        // mock transactionTemplate callback
-        Mockito.when(txTemplate.execute(Mockito.any()))
-                .thenAnswer(invocation -> {
-                    TransactionCallback cb = invocation.getArgument(0);
-                    return cb.doInTransaction(Mockito.mock(TransactionStatus.class));
-                });
+        } else {
+            LOG.info("xpath ignoreing configuration file is not existing.");
+        }
     }
-
-    // ============ Test process() ============
-    @Test
-    public void testProcess() throws Exception {
-        Message in = Mockito.mock(Message.class);
-        Mockito.when(exchange.getIn()).thenReturn(in);
-        processor.process(exchange);
-        Mockito.verify(in, Mockito.atLeastOnce()).setBody(Mockito.any());
+    @Override
+    
+    public void handleExchange(Exchange exchange) throws Exception {
+        Path rootDir = Paths.get(System.getProperty("root_dir"));
+        Path uvtInputFolderPath = rootDir.resolve("regression_input").normalize();
+        if (!uvtInputFolderPath.toAbsolutePath().startsWith(rootDir.toAbsolutePath())) {
+            throw new SecurityException("Invalid root_dir path");
+        }
+        Files.createDirectories(uvtInputFolderPath);
+        Path filePath = uvtInputFolderPath.resolve("generate_report.flag").normalize();
+        if (!filePath.toAbsolutePath().startsWith(uvtInputFolderPath.toAbsolutePath())) {
+            throw new SecurityException("Invalid file path detected");
+        }
+        File file = filePath.toFile();
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                LOG.error("Exception when RegressionTestProcessor handleExchange!", e);            }
+        }
+        String singleLegFixML = StringUtils.trimToEmpty(exchange.getIn().getBody(
+                String.class));
+        XPathParser intraXmlParser = new XPathParser(singleLegFixML);
+        String legType = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegType"));
+        String tradeExternalId = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeExternalId"));
+        String maxLegVal = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.MaxLegVal"));
+        String legID =intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegID"));
+        String legSubID=intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegSubID"));
+        String externalId = getFullTradeId(tradeExternalId,legType,maxLegVal,legID,legSubID);
+        LOG.info(externalId);
+        // transform
+        transformStages(exchange, singleLegFixML);
+        Set<String> errors = StaticDataDict.getErrorList();
+        if (CollectionUtils.isNotEmpty(errors)) {
+            RegressionAssist.addRegressionResult(new RegressionResult(
+                    externalId, "failed", errors.toString()));
+        } else {
+            // compare
+            String mxml = exchange.getIn().getBody(String.class);
+            Path outputBase = outputMxmlFolder.toPath();
+            Path outputMxmlPath = outputBase.resolve(externalId + ".xml").normalize();
+            if (!outputMxmlPath.toAbsolutePath().startsWith(outputBase.toAbsolutePath())) {
+                throw new SecurityException("Invalid output MXML path: " + externalId);
+            }
+            Files.write(outputMxmlPath, mxml.getBytes(StandardCharsets.UTF_8));
+            Path expectedBase = expectedMxmlFolder.toPath();
+            Path expectedMxmlPath = expectedBase.resolve(externalId + ".xml").normalize();
+            if (!expectedMxmlPath.toAbsolutePath().startsWith(expectedBase.toAbsolutePath())) {
+                throw new SecurityException("Invalid expected MXML path: " + externalId);
+            }
+            File expectedMxml = expectedMxmlPath.toFile();
+            if (expectedMxml.exists()) {
+                String expectedMxmlStr = FileUtils.readFileToString(
+                        expectedMxml, "UTF-8");
+                XPathParser mxmlParser = new XPathParser(mxml);
+                XPathParser expectedParser = new XPathParser(expectedMxmlStr);
+                for (String xpath : ignoreXpathList) {
+                    if (StringUtils.isBlank(xpath)) {
+                        continue;
+                    }
+                    mxmlParser.removeNode(StringUtils.trim(xpath));
+                    expectedParser.removeNode(StringUtils.trim(xpath));
+                }
+                Diff diff = DiffBuilder
+                        .compare(
+                                Input.fromString(StringUtils.trim(XmlUtils
+                                        .formatXml(expectedMxmlStr))))
+                        .withTest(
+                                Input.fromString(StringUtils.trim(XmlUtils
+                                        .formatXml(mxml))))
+                        .build();
+                if (diff.hasDifferences()) {
+                    Iterator<Difference> differences = diff.getDifferences()
+                            .iterator();
+                    Difference difference = null;
+                    List<String> differenceList = new ArrayList<>();
+                    while (differences.hasNext()) {
+                        difference = differences.next();
+                        differenceList.add(difference.toString());
+                    }
+                    RegressionAssist.addRegressionResult(new RegressionResult(
+                            externalId, "diff", StringUtils.join(
+                            differenceList.toArray(), "\n")));
+                } else {
+                    RegressionAssist.addRegressionResult(new RegressionResult(
+                            externalId, "match", ""));
+                }
+            } else {
+                RegressionAssist.addRegressionResult(new RegressionResult(
+                        externalId, "failed", "excepted file is not existing: "
+                        + expectedMxml.getAbsolutePath()));
+            }
+        }
     }
-
-    // ============ Test saveJournal() ============
-    @Test
-    public void testSaveJournal() throws Exception {
-        Journal j = new Journal();
-        j.setId("100");
-        j.setContent("hello");
-        j.setStatus("SENT");
-
-        Message in = Mockito.mock(Message.class);
-        Mockito.when(exchange.getProperty("isUVT", String.class)).thenReturn("N");
-        Mockito.when(exchange.getIn()).thenReturn(in);
-
-        processor.saveJournal(exchange, j);
-        Mockito.verify(txTemplate, Mockito.times(1)).execute(Mockito.any());
-    }
-
-    // ============ Test transformStages() ============
-    @Test
-    public void testTransformStages_SMP() throws Exception {
-        PowerMockito.whenNew(XPathParser.class).withAnyArguments()
-                .thenReturn(mockParserWithTradeType("SMP"));
-
-        Message in = Mockito.mock(Message.class);
-        Mockito.when(exchange.getIn()).thenReturn(in);
-
-        // call producer will NPE → mock掉
-        PowerMockito.spy(processor);
-        PowerMockito.doNothing().when((BaseProcessor)processor)
-                .callProducer(Mockito.anyString(), Mockito.eq(exchange));
-
-        processor.transformStages(exchange, "<msg/>");
-    }
-
-    @Test
-    public void testTransformStages_Hedge() throws Exception {
-        PowerMockito.whenNew(XPathParser.class).withAnyArguments()
-                .thenReturn(mockParserWithTradeType("HEDGE"));
-
-        Message in = Mockito.mock(Message.class);
-        Mockito.when(exchange.getIn()).thenReturn(in);
-
-        PowerMockito.spy(processor);
-        PowerMockito.doNothing().when((BaseProcessor)processor)
-                .callProducer(Mockito.anyString(), Mockito.eq(exchange));
-
-        processor.transformStages(exchange, "<msg/>");
-    }
-
-    // helper
-    private XPathParser mockParserWithTradeType(String tradeType) {
-        XPathParser parser = Mockito.mock(XPathParser.class);
-        Mockito.when(parser.evaluate(Mockito.anyString())).thenReturn(tradeType);
-        return parser;
-    }
-
-    // ============ Test filter() ============
-    @Test
-    public void testFilter() throws Exception {
-        Message in = Mockito.mock(Message.class);
-        Mockito.when(in.getBody(String.class)).thenReturn("<A>1</A>");
-        Mockito.when(exchange.getIn()).thenReturn(in);
-
-        Document doc = DocumentHelper.parseText("<A>1</A>");
-        PowerMockito.mockStatic(DocumentHelper.class);
-        Mockito.when(DocumentHelper.parseText("<A>1</A>")).thenReturn(doc);
-
-        PowerMockito.mockStatic(StaticDataDict.class);
-        Mockito.when(StaticDataDict.getErrorList()).thenReturn(new HashSet<>());
-
-        Assert.assertTrue(BaseProcessor.filter(exchange));
-    }
-
-    // ============ Test getFullTradeId ============
-    @Test
-    public void testGetFullTradeId() {
-        String r = BaseProcessor.getFullTradeId("T100", "Legs", "3", "1", "1");
-        Assert.assertTrue(r.contains("T100"));
-    }
-
-    // ============ Test calculateFXOAmount ============
-    @Test
-    public void testCalculateFXOAmount() {
-        String r = BaseProcessor.calculateFXOAmount("USD", "USD", "USD",
-                "100", "1.5", "1");
-        Assert.assertEquals("100", r);
-    }
-
-    // ============ Test getters ============
-    @Test
-    public void testGetPutCurrency() {
-        String r = BaseProcessor.getPutCurrency("2","USD","USDEUR");
-        Assert.assertEquals("USD", r);
-    }
-
 }
