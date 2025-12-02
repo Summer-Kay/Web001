@@ -1,472 +1,181 @@
-package com.scb.mxg.mls.rt.gfi.processor;
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <version>3.12.4</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.powermock</groupId>
+    <artifactId>powermock-module-junit4</artifactId>
+    <version>2.0.9</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.powermock</groupId>
+    <artifactId>powermock-api-mockito2</artifactId>
+    <version>2.0.9</version>
+    <scope>test</scope>
+</dependency>
 
 
-import com.scb.mxg.mls.rt.gfi.lookup.StaticDataDict;
-import com.scb.mxg.mls.rt.gfi.vo.TradeEvent;
-import com.scb.mxg.mls.rt.vo.Email;
-import com.scb.mxg.mls.trade.TradeEventType;
-import com.scb.mxg.mls.utils.XPathParser;
-import com.scb.mxg.mls.vo.Journal;
-import com.scb.mxg.mls.vo.JournalProperty;
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
-import org.apache.camel.Producer;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.configuration2.CompositeConfiguration;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.lang3.StringUtils;
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.script.*;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.*;
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({
+        BaseProcessor.class,
+        StaticDataDict.class,
+        XPathParser.class
+})
+public class BaseProcessorTest {
 
-public abstract class BaseProcessor implements Processor {
-    protected final static String JOURNAL_SOURCE = "GFI_MUREX";
-    protected final static String ORIGINAL_TRACKING_ID = "ORIGINAL_TRACKING_ID";
-    protected TransactionTemplate mlsDbTransactionTemplate;
-    protected JdbcTemplate mlsDbJdbcTemplate;
-    protected static final CompositeConfiguration CONFIG;
-    private static final String FILE_CONFIG_APPLICATION = "application.properties";
-    private static final String FILE_CONFIG_GFI = "properties/gfi.properties";
-    private static String insert_journal = null;
-    private static String insert_journal_property =null;
-    private static String filterExpression;
-    private static CompiledScript filterScript;
-    private static final Configuration CONFIG_XPATH;
-    private static ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-    private final static Logger LOG = LoggerFactory.getLogger(BaseProcessor.class);
+    private BaseProcessor processor;
+    private Exchange exchange;
+    private JdbcTemplate jdbcTemplate;
+    private TransactionTemplate txTemplate;
 
-    public abstract void handleExchange(Exchange exchange) throws Exception;
-    private static Properties appProperties = null;
-    static {
-        try {
-            appProperties = new Properties();
-            CONFIG = new CompositeConfiguration();
-            //Update below code for commons-configuration2
-            Configurations configs = new Configurations();
-            CONFIG.addConfiguration(configs.properties(FILE_CONFIG_APPLICATION));
-            CONFIG.addConfiguration(configs.properties(FILE_CONFIG_GFI));
-            CONFIG_XPATH = CONFIG.subset("gfi.xpath");
-            insert_journal = CONFIG.getString("gfi.sql.insert.messageJournal");
-            insert_journal_property = CONFIG.getString("gfi.sql.insert.journal.property");
-            filterExpression = CONFIG.getString("gfi.messageFilter.expression");
-            filterScript = ((Compilable) engine).compile(filterExpression);
-            appProperties.load(ClassLoader.getSystemResourceAsStream("application.properties"));
-        } catch (ConfigurationException | ScriptException | IOException e) {
-            LOG.error("Exception when init application configuration!", e);
-            throw new ExceptionInInitializerError(e);
-        }
-        LOG.info("application configuration init successfully!");
-    }
+    @Before
+    public void setup() throws Exception {
 
-    public void setMlsDbJdbcTemplate(JdbcTemplate mlsDbJdbcTemplate) {
-        this.mlsDbJdbcTemplate = mlsDbJdbcTemplate;
-    }
+        // mock Camel
+        exchange = Mockito.mock(Exchange.class);
+        Mockito.when(exchange.getPattern()).thenReturn(ExchangePattern.InOut);
 
-    public void setMlsDbTransactionTemplate(
-            TransactionTemplate mlsDbTransactionTemplate) {
-        this.mlsDbTransactionTemplate = mlsDbTransactionTemplate;
-    }
+        // mock Jdbc
+        jdbcTemplate = Mockito.mock(JdbcTemplate.class);
+        txTemplate = Mockito.mock(TransactionTemplate.class);
 
-    @Override
-    public void process(Exchange exchange) throws Exception {
-        LOG.info("ExchangePattern: " + exchange.getPattern().toString());
-        handleExchange(exchange);
-    }
+        // mock StaticDataDict
+        PowerMockito.mockStatic(StaticDataDict.class);
+        Mockito.when(StaticDataDict.getErrorList()).thenReturn(new HashSet<>());
+        Mockito.when(StaticDataDict.lookupTrader(Mockito.anyString())).thenReturn("T001");
 
-    protected void saveJournal(Exchange exchange, final Journal journal) {
-        if("Y".equals(exchange.getProperty("isUVT",String.class))){
-            LOG.info("UVT Message without saving in Journal --- \n" + journal.getContent());
-        }else{
-            LOG.info("saving journal, id: {}, message: {}", journal.getId(),journal.getContent());
-            mlsDbTransactionTemplate.execute(new TransactionCallback<Object>() {
-                @Override
-                public Object doInTransaction(TransactionStatus status) {
-                    Map<String, String> map = new HashMap<>();
-                    map.put("id",journal.getId());
-                    map.put("journalSource",JOURNAL_SOURCE);
-                    map.put("status",journal.getStatus());
-                    map.put("referId",journal.getReferId());
-                    map.put("content",journal.getContent());
-                    map.put("type",journal.getType());
-                    map.put("trackingId",journal.getTrackingId());
-                    NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(mlsDbJdbcTemplate);
-                    namedParameterJdbcTemplate.update(insert_journal, map);
-                    if (CollectionUtils.isNotEmpty(journal.getProperties())) {
-                        List<Map<String,String>> batchArgs = new ArrayList<>();
-                        for (JournalProperty jp : journal.getProperties()) {
-                            map = new HashMap();
-                            map.put("jpId",jp.getId());
-                            map.put("id",journal.getId());
-                            map.put("key",jp.getKey());
-                            map.put("value",jp.getValue());
-                            batchArgs.add(map);
-                        }
-                        new NamedParameterJdbcTemplate(mlsDbJdbcTemplate).batchUpdate(insert_journal_property,
-                                batchArgs.toArray(new Map[0]));
-                    }
-                    return null;
-                }
-            });
-            LOG.info("message is saved, id: {}", journal.getId());
-        }
-    }
+        // mock XPathParser
+        PowerMockito.whenNew(XPathParser.class)
+                .withAnyArguments()
+                .thenReturn(Mockito.mock(XPathParser.class));
 
-    protected void recordTradeEvent(Exchange exchange, TradeEvent event)
-            throws Exception {
-        exchange.setProperty("tradeEvent", event);
-        callProducer("freemarker:ftl/event.ftl?allowContextMapAll=true", exchange);
-
-        if("Y".equals(exchange.getProperty("isUVT",String.class))){
-            LOG.info("UVT Message without recording trade event --- \n" + exchange.getIn().getBody());
-        }else{
-            LOG.info("recording trade event: \n" + exchange.getIn().getBody());
-            exchange.getIn().removeHeaders("*");
-            callProducer("mlsTunnelJmsC:topic:"
-                    + CONFIG.getString("mlsTunnle.t.tradeEvent"), exchange);
-            LOG.info("record trade event done");
-        }
-    }
-
-    protected void callProducer(String uri, Exchange exchange) throws Exception {
-        Producer producer = exchange.getContext().getEndpoint(uri)
-                .createProducer();
-        LOG.info(producer.toString());
-        producer.start();
-        producer.process(exchange);
-        exchange.getIn().setBody(exchange.getOut().getBody());
-    }
-
-    protected void transformToMurex(Exchange exchange, String fixML,
-                                    String tradeEvent, String originalTrackingId, String originalId,
-                                    String originalSys, String version, String inJournalId)
-            throws Exception {
-        transformStages(exchange, fixML);
-        Set<String> errors = StaticDataDict.getErrorList();
-        if (CollectionUtils.isNotEmpty(errors)) {
-            TradeEvent event = new TradeEvent();
-            event.setOriginalId(originalId);
-            event.setOriginalSys(originalSys);
-            event.setVersion(version);
-            event.setTrackingId(inJournalId);
-            event.setEventSource("MLS");
-            event.setAction(TradeEventType.STPException);
-            event.setSubAction(tradeEvent);
-            event.setDetails(errors.toString());
-            event.setComments("");
-            event.setReferSysStatus("");
-            event.setReferSysTradeId("");
-            recordTradeEvent(exchange, event);
-
-            //send STP exception mail
-            sendSTPExceptionMail(exchange, event);
-        } else {
-            // save mxml
-            Journal outJournal = new Journal();
-            outJournal.setContent(exchange.getIn().getBody(String.class));
-            outJournal.setStatus(Journal.SENT);
-            outJournal.setReferId(originalId);
-            outJournal.setType(tradeEvent);
-            outJournal.setTrackingId(originalTrackingId);
-            saveJournal(exchange, outJournal);
-            // send to murex
-            if("Y".equals(exchange.getProperty("isUVT",String.class))){
-                LOG.info("sending UVT mxml {} to UVT End Topic...", exchange.getProperty("_trade_id"));
-                callProducer("mlsTunnelJmsC:topic:"
-                        + CONFIG.getString("mlsTunnle.t.uvt.out"), exchange);
-                LOG.info("send UVT mxml {} to UVT End Topic done", exchange.getProperty("_trade_id"));
-            }else{
-                LOG.info("sending mxml {} to Murex...", exchange.getProperty("_trade_id"));
-                exchange.getIn().removeHeaders("*");
-                exchange.getIn().setHeader(
-                        "CamelJmsDestinationName",
-                        "queue:///" + CONFIG.getString("mxg.q.req")
-                                + "?targetClient=1");
-                callProducer("mlsmqJmsC:queue:" + CONFIG.getString("mxg.q.req"),
-                        exchange);
-                LOG.info("send mxml {} to Murex done.", exchange.getProperty("_trade_id"));
+        // create processor (anonymous subclass)
+        processor = new BaseProcessor() {
+            @Override
+            public void handleExchange(Exchange exchange) throws Exception {
+                // simple stub
+                exchange.getIn().setBody("<test/>");
             }
-            // record done
-            TradeEvent event = new TradeEvent();
-            event.setOriginalId(originalId);
-            event.setOriginalSys(originalSys);
-            event.setVersion(version);
-            event.setTrackingId(outJournal.getId());
-            event.setEventSource("Mls");
-            event.setAction(TradeEventType.ACK);
-            event.setSubAction("Send");
-            event.setDetails("");
-            event.setComments("");
-            event.setReferSysStatus("");
-            event.setReferSysTradeId("");
-            recordTradeEvent(exchange, event);
-            }
+        };
+
+        processor.setMlsDbJdbcTemplate(jdbcTemplate);
+        processor.setMlsDbTransactionTemplate(txTemplate);
+
+        // mock transactionTemplate callback
+        Mockito.when(txTemplate.execute(Mockito.any()))
+                .thenAnswer(invocation -> {
+                    TransactionCallback cb = invocation.getArgument(0);
+                    return cb.doInTransaction(Mockito.mock(TransactionStatus.class));
+                });
     }
 
-
-    protected void transformStages(Exchange exchange, String intraXml)
-            throws Exception {
-        if (StaticDataDict.getErrorList() != null) {
-            StaticDataDict.getErrorList().clear();
-        }
-        exchange.getIn().setBody(intraXml);
-        XPathParser intraXmlParser = new XPathParser(intraXml);
-        String tradeType = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeType"));
-
-        if (StringUtils.equals(tradeType, "SMP")) {
-            callProducer(
-                    "xslt:xslt/fxo_gfi_Vanilla_fixML_mxml.xsl?saxon=true",
-                    exchange);
-        } else {
-            callProducer(
-                    "xslt:xslt/fxo_gfi_Hedge_fixML_mxml.xsl?saxon=true",
-                    exchange);
-        }
+    // ============ Test process() ============
+    @Test
+    public void testProcess() throws Exception {
+        Message in = Mockito.mock(Message.class);
+        Mockito.when(exchange.getIn()).thenReturn(in);
+        processor.process(exchange);
+        Mockito.verify(in, Mockito.atLeastOnce()).setBody(Mockito.any());
     }
 
-    protected void sendSTPExceptionMail(Exchange exchange, TradeEvent event) throws Exception {
-        String _exceptionDetails = enrichExceptionInformation(exchange,event.getDetails());
-        String defaultEmail = CONFIG.getString("default.email");
-        String originalMessage = exchange.getProperty("_originalMessage", String.class);
-        Email email = new Email();
-        email.setDetails(_exceptionDetails);
-        email.setExternalTradeId(event.getOriginalId());
-        email.setMxgTradeId("");
-        email.setSourceSystem(event.getOriginalSys());
-        email.setStatus("Trade [" + event.getSubAction() + "] STP Exception");
-        email.setSubject(event.getOriginalId() + " [" + event.getSubAction() + "] STPException");
-        email.setTo(StaticDataDict.lookupEmail(exchange.getProperty("_trader", String.class)));
-        email.setTrackingId(event.getTrackingId());
-        email.setCc(getMoMail());
+    // ============ Test saveJournal() ============
+    @Test
+    public void testSaveJournal() throws Exception {
+        Journal j = new Journal();
+        j.setId("100");
+        j.setContent("hello");
+        j.setStatus("SENT");
 
-        if (StringUtils.isBlank(email.getTo())) {
-            LOG.info(
-                    "email address is blank, will set it to default email address, subject: {}",
-                    email.getSubject());
-            if (StringUtils.isBlank(defaultEmail)) {
-                LOG.warn(
-                        ">>>SystemWarning: defalut email address is also blank, please check file <application.properties>(email.alert.default)");
-            }
-            email.setTo(defaultEmail);
-        }
+        Message in = Mockito.mock(Message.class);
+        Mockito.when(exchange.getProperty("isUVT", String.class)).thenReturn("N");
+        Mockito.when(exchange.getIn()).thenReturn(in);
 
-        if (StringUtils.isBlank(email.getTo())) {
-            LOG.warn(">>>SystemWarning: email address is still blank, so will not send email to anywhere");
-            return;
-        }
-        LOG.info("sending email to: {}", email.getTo());
-        exchange.setProperty("email", email);
-
-        callProducer("freemarker:ftl/email.ftl?allowContextMapAll=true", exchange);
-        LOG.info(exchange.getOut().getBody().toString());
-
-        exchange.getIn().removeHeaders("*");
-        callProducer("mlsTunnelJmsC:topic:"
-                + CONFIG.getString("mlsTunnle.t.email"), exchange);
-
-        exchange.getIn().setBody(originalMessage);
-        LOG.info("send email done");
+        processor.saveJournal(exchange, j);
+        Mockito.verify(txTemplate, Mockito.times(1)).execute(Mockito.any());
     }
 
-    private String getMoMail() throws Exception {
-        StringBuffer moMail = new StringBuffer();
-        String key = "GFI|%";
-        String mappingType = "MO Mail Id Mapping";
-        LOG.info("getMappingValue start - mappingType:{}, key:{}", mappingType, key);
-        Map<String, String> map = new HashMap<>();
-        map.put("key",key);
-        map.put("mappingType",mappingType);
-        List<String> list = queryForList(CONFIG.getString("gfi.sql.query.static.mapping"), map);
-        for (String singleMail : list) {
-            LOG.info(singleMail);
-            moMail.append(singleMail);
-            moMail.append(";");
-        }
-        if (StringUtils.isEmpty(moMail)) {
-            LOG.warn(" cannot find MO mail mapping for {} ", "GFI");
-        }
-        LOG.info("getMappingValue end -  mappingType:{}, key:{}, result:{}", new Object[]{mappingType, key, moMail.toString()});
-        return moMail.toString();
+    // ============ Test transformStages() ============
+    @Test
+    public void testTransformStages_SMP() throws Exception {
+        PowerMockito.whenNew(XPathParser.class).withAnyArguments()
+                .thenReturn(mockParserWithTradeType("SMP"));
+
+        Message in = Mockito.mock(Message.class);
+        Mockito.when(exchange.getIn()).thenReturn(in);
+
+        // call producer will NPE → mock掉
+        PowerMockito.spy(processor);
+        PowerMockito.doNothing().when((BaseProcessor)processor)
+                .callProducer(Mockito.anyString(), Mockito.eq(exchange));
+
+        processor.transformStages(exchange, "<msg/>");
     }
 
-    public List<String> queryForList(String sql, Map<String, String> args) {
-        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(mlsDbJdbcTemplate);
-        List<String> result = namedParameterJdbcTemplate.queryForList(sql, args, String.class);
-        return result;
+    @Test
+    public void testTransformStages_Hedge() throws Exception {
+        PowerMockito.whenNew(XPathParser.class).withAnyArguments()
+                .thenReturn(mockParserWithTradeType("HEDGE"));
+
+        Message in = Mockito.mock(Message.class);
+        Mockito.when(exchange.getIn()).thenReturn(in);
+
+        PowerMockito.spy(processor);
+        PowerMockito.doNothing().when((BaseProcessor)processor)
+                .callProducer(Mockito.anyString(), Mockito.eq(exchange));
+
+        processor.transformStages(exchange, "<msg/>");
     }
 
-    private static String enrichExceptionInformation(Exchange exchange, String exceptionDetails)throws Exception {
-        String fixML=String.valueOf(exchange.getProperty("_intraXml"));
-        if("null".equals(fixML)||fixML.isEmpty()){
-            return exceptionDetails;
-        }else{
-            XPathParser fixMLParser = new XPathParser(fixML);
-            String mxgGroup= fixMLParser.evaluate(CONFIG.getString("gfi.xpath.tradeCatGroup"));
-            //trade info added in exception email
-            StringBuffer enhancedTradeInfo = new StringBuffer();
-            enhancedTradeInfo.append("<br/><br/>");
-            enhancedTradeInfo.append("===============================================<br/>");
-            enhancedTradeInfo.append("Contract Details: <br/><br/>");
-            enhancedTradeInfo.append("Source: " + StaticDataDict.lookupSource(fixMLParser.evaluate(CONFIG.getString("gfi.xpath.brokerName")).split("\\|")[2]) + "<br/>");
-            enhancedTradeInfo.append("MXG Family: " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.tradeCatFamily")) + "<br/>");
-            enhancedTradeInfo.append("MXG Group: " + mxgGroup + "<br/>");
-            enhancedTradeInfo.append("MXG Type: " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.tradeCatType")) + "<br/>");
-            enhancedTradeInfo.append("MXG Trader: " + StaticDataDict.lookupTrader(fixMLParser.evaluate(CONFIG.getString("gfi.xpath.trader"))) + "<br/>");
-            enhancedTradeInfo.append("MXG Counterparty: " + StaticDataDict.lookupCounterpartyCode(fixMLParser.evaluate(CONFIG.getString("gfi.xpath.counterpartyId")).split("\\|")[3]) + "<br/>");
-
-            enhancedTradeInfo.append("<br/><br/>");
-            enhancedTradeInfo.append("===============================================<br/>");
-            enhancedTradeInfo.append("Trade Details: <br/><br/>");
-            enhancedTradeInfo.append("Trade Date: " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.tradeDate")) + "<br/>");
-            enhancedTradeInfo.append("Trader ID: " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.trader")) + "<br/>");
-            if("OPT".equals(mxgGroup)){
-                String legStrategy= fixMLParser.evaluate(CONFIG.getString("gfi.xpath.legStrategy"));
-                String legStrategyCurrency =fixMLParser.evaluate(CONFIG.getString("gfi.xpath.legStrategyCurrency"));
-                String portfolio =fixMLParser.evaluate(CONFIG.getString("gfi.xpath.portfolioLabel"));
-                String callCurrency=getCallCurrency(legStrategy,legStrategyCurrency,portfolio);
-                String putCurrency=getPutCurrency(legStrategy,legStrategyCurrency,portfolio);
-                String legSide= fixMLParser.evaluate(CONFIG.getString("gfi.xpath.legSide"));
-                enhancedTradeInfo.append("Strategy: " + StaticDataDict.lookupStrategy(fixMLParser.evaluate(CONFIG.getString("gfi.xpath.structure1"))) + "<br/>");
-                enhancedTradeInfo.append("Product Type: " + CONFIG.getString("gfi.productType."+legStrategy) + "<br/>");
-                enhancedTradeInfo.append("Call Currency: " +  callCurrency + "<br/>");
-                enhancedTradeInfo.append("Put Currency: " + putCurrency + "<br/>");
-                enhancedTradeInfo.append("Strike Price: " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.legStrikePrice")) + "<br/>");
-                enhancedTradeInfo.append("Maturity: " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.maturityDate")) + "<br/>");
-                enhancedTradeInfo.append("LegSide: " + CONFIG.getString("gfi.legSide."+legSide) + "<br/>");
-
-            }else if ("FXD".equals(mxgGroup)){
-                String hedgeDirectionIND= fixMLParser.evaluate(CONFIG.getString("gfi.xpath.hedgeDirectionIND"));
-                enhancedTradeInfo.append("Hedge Currency : " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.hedgeCurrency"))+ "<br/>");
-                enhancedTradeInfo.append("Hedge Symbol : " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.hedgeSymbol"))+ "<br/>");
-                enhancedTradeInfo.append("Hedge Rate : " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.hedgeRate"))+ "<br/>");
-                enhancedTradeInfo.append("Hedge Delivery Date : " + fixMLParser.evaluate(CONFIG.getString("gfi.xpath.hedgeDelivery"))+ "<br/>");
-                enhancedTradeInfo.append("Hedge Direction : " + CONFIG.getString("gfi.hedgeDirection."+hedgeDirectionIND) + "<br/>");
-            }
-            return exceptionDetails.replace("],","],<br/>") + enhancedTradeInfo.toString();
-        }
-
-    }
-    public static String getFullTradeId(String tradeExternalId, String LegType, String MaxLegVal, String LegID, String LegSubID){
-        String fullTradeId="";
-       /* the invalid hedge leg has been filtered out at the begin of StpProcessor.*/
-        int maxLegVal=Integer.parseInt(MaxLegVal);
-        int legId=Integer.parseInt(LegID);
-        int legSubId=Integer.parseInt(LegSubID);
-        if("Legs".equals(LegType)) {
-            fullTradeId=tradeExternalId+".("+ (maxLegVal-legId+legSubId) + ")";
-        } else if ("HedgeLegs".equals(LegType)) {
-            fullTradeId = tradeExternalId+ ".(" +((maxLegVal-legId)*2+legSubId) +")";
-        }
-        return fullTradeId;
-    }
-    public static String calculateFXOAmount(String callOrPutCurrency, String legCurrency, String baseCurrency, String legQuantity, String legStrikePrice, String unit){
-        double amount=0;
-        java.text.NumberFormat nf = java.text.NumberFormat.getInstance();
-        if(callOrPutCurrency.equals(legCurrency)) {
-             amount=Double.parseDouble(legQuantity)*Double.parseDouble(unit);
-        } else if(callOrPutCurrency.equals(baseCurrency)){
-            amount=Double.parseDouble(legQuantity)*Double.parseDouble(unit)/Double.parseDouble(legStrikePrice);
-        } else {
-            amount=Double.parseDouble(legQuantity)*Double.parseDouble(unit)*Double.parseDouble(legStrikePrice);
-        }
-        return nf.format(amount).replace(",","");
+    // helper
+    private XPathParser mockParserWithTradeType(String tradeType) {
+        XPathParser parser = Mockito.mock(XPathParser.class);
+        Mockito.when(parser.evaluate(Mockito.anyString())).thenReturn(tradeType);
+        return parser;
     }
 
-    public static String calculateFXDAmount(String hedgeCurrency, String hedgeSymbol, String hedgeAmount,String hedgeRate, String unit ){
-        double amount =0;
-        java.text.NumberFormat nf = java.text.NumberFormat.getInstance();
-        if(hedgeCurrency.equals(hedgeSymbol.substring(0,3))){
-            amount = Double.parseDouble(hedgeAmount)*Double.parseDouble(unit)*Double.parseDouble(hedgeRate);
-        }else {
-            amount = Double.parseDouble(hedgeAmount)*Double.parseDouble(unit)/Double.parseDouble(hedgeRate);
-        }
-        return  nf.format(amount).replace(",","");
-    }
-    public static String getWaiverIndicator(String waiverIND, String tradeExternalId){
-        String waiverIndicator = CONFIG.getString("gfi.udf.waiver.indicator."+waiverIND);
-        if(waiverIndicator == null){
-            LOG.info(">>>SystemWarning: Waiver indicator ( {} ) in source message {} is not existing or invalid", waiverIND, tradeExternalId);
-            waiverIndicator="";
-        }
-        return waiverIndicator;
+    // ============ Test filter() ============
+    @Test
+    public void testFilter() throws Exception {
+        Message in = Mockito.mock(Message.class);
+        Mockito.when(in.getBody(String.class)).thenReturn("<A>1</A>");
+        Mockito.when(exchange.getIn()).thenReturn(in);
+
+        Document doc = DocumentHelper.parseText("<A>1</A>");
+        PowerMockito.mockStatic(DocumentHelper.class);
+        Mockito.when(DocumentHelper.parseText("<A>1</A>")).thenReturn(doc);
+
+        PowerMockito.mockStatic(StaticDataDict.class);
+        Mockito.when(StaticDataDict.getErrorList()).thenReturn(new HashSet<>());
+
+        Assert.assertTrue(BaseProcessor.filter(exchange));
     }
 
-    public static String getCallCurrency(String legStrategy, String legStrategyCurrency, String portfolio){
-        String callCurrency="";
-        if("1".equals(legStrategy)){
-            callCurrency=legStrategyCurrency;
-        }else if(legStrategyCurrency.equals(portfolio.substring(0,3))){
-            callCurrency = portfolio.substring(3);
-        }else {
-            callCurrency = portfolio.substring(0,3);
-        }
-        return callCurrency;
+    // ============ Test getFullTradeId ============
+    @Test
+    public void testGetFullTradeId() {
+        String r = BaseProcessor.getFullTradeId("T100", "Legs", "3", "1", "1");
+        Assert.assertTrue(r.contains("T100"));
     }
 
-    public static String getPutCurrency(String legStrategy, String legStrategyCurrency, String portfolio){
-        String putCurrency="";
-        if("2".equals(legStrategy)){
-            putCurrency=legStrategyCurrency;
-        } else if(legStrategyCurrency.equals(portfolio.substring(0,3))){
-            putCurrency = portfolio.substring(3);
-        }else {
-            putCurrency = portfolio.substring(0,3);
-        }
-        return putCurrency;
-    }
-    public static String getXpathValue(Document doc, String key) {
-        String xpath = getXpath(key);
-        Node node = doc.selectSingleNode(xpath);
-        return node == null ? "" : node.getText().trim();
-    }
-    public static String getXpath(String key) {
-        return getValueFromConfig(key, CONFIG_XPATH);
+    // ============ Test calculateFXOAmount ============
+    @Test
+    public void testCalculateFXOAmount() {
+        String r = BaseProcessor.calculateFXOAmount("USD", "USD", "USD",
+                "100", "1.5", "1");
+        Assert.assertEquals("100", r);
     }
 
-    public static String getValueFromConfig(String key, Configuration config) {
-        if (StringUtils.isBlank(key)) {
-            return "";
-        }
-        String value = config.getString(key.toUpperCase());
-        if (StringUtils.isBlank(value)) {
-            LOG.warn(">>>WARN>>> cannot find the related value for key - {} from configuraiton! ", key);
-        }
-        return value;
+    // ============ Test getters ============
+    @Test
+    public void testGetPutCurrency() {
+        String r = BaseProcessor.getPutCurrency("2","USD","USDEUR");
+        Assert.assertEquals("USD", r);
     }
-    public static boolean filter(Exchange exchange) throws Exception{
-        String sourceFixXml = exchange.getIn().getBody(String.class);
-        Map<String, Object> map = new HashMap<String, Object>();
-        //Update below code for commons-configuration2
-        String listValue = CONFIG.getString("gfi.messageFilter.keys");
-        String[] keys = listValue.split("\\$");
-        Document doc = DocumentHelper.parseText(sourceFixXml);
-        for (String key : keys) {
-            String value = getXpathValue(doc, key.trim());
-            map.put(key.trim(), value);
-        }
-        SimpleBindings bindings = new SimpleBindings();
-        bindings.putAll(map);
-        boolean accepted = (boolean) filterScript.eval(bindings);
-        if (!accepted) {
-            LOG.info("message is filtered out!\n expression: {}; bindings: {}; message body: {}\n", filterExpression, map,sourceFixXml);
-        }
-        return accepted;
-    }
-    protected static String getAppProperty(String key) {
-        return StringUtils.trimToEmpty(appProperties.getProperty(key));
-    }
+
 }
-
