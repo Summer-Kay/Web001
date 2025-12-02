@@ -1,140 +1,48 @@
 package com.scb.mxg.mls.rt.gfi.utils;
 
-import com.saxonica.config.EnterpriseXPathFactory;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
+import org.junit.Assert;
+import org.junit.Test;
 
-import javax.xml.XMLConstants;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.ByteArrayOutputStream;
-import java.util.Iterator;
+public class XPathParserTest {
 
+    @Test
+    public void testConstructorAndEvaluateAndGetXmlContent() throws Exception {
+        String xml = "<root xmlns=\"http://test.com\">" +
+                "<item>AAA</item>" +
+                "<item>BBB</item>" +
+                "<value>123</value>" +
+                "</root>";
 
-public final class XPathParser {
-	private static final Logger logger = LoggerFactory.getLogger(XPathParser.class);
+        XPathParser parser = new XPathParser(xml);
 
-	private Document document = null;
-	private XPath xPath;
+        // evaluate 找到多个节点 → 应只取第一个
+        String itemValue = parser.evaluate("/*[local-name()='root']/*[local-name()='item']");
+        Assert.assertEquals("AAA", itemValue);
 
-	public XPathParser() {
-	}
+        // evaluate 找不到节点
+        String missingValue = parser.evaluate("/*[local-name()='root']/*[local-name()='not_exist']");
+        Assert.assertEquals("", missingValue);
 
-	public XPathParser(String xmlContent) throws Exception {
-		_initDocument(StringUtils.trimToEmpty(xmlContent));
-	}
+        // evaluate 单个节点
+        String value = parser.evaluate("/*[local-name()='root']/*[local-name()='value']");
+        Assert.assertEquals("123", value);
 
-	private void _initDocument(String xmlContent) throws Exception {
-		if (this.document == null) {
-			String _xmlContent = xmlContent.replaceAll("xmlns\\s*=", "xmlns:default_namespace_prefix=");
+        // getXmlContent() 返回完整 XML
+        String output = parser.getXmlContent();
+        Assert.assertTrue(output.contains("<root"));
+        Assert.assertTrue(output.contains("AAA"));
+        Assert.assertTrue(output.contains("BBB"));
+    }
 
-			DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-			builderFactory.setExpandEntityReferences(false);
-			builderFactory.setNamespaceAware(true);
-			builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-			DocumentBuilder builder = builderFactory.newDocumentBuilder();
-			this.document = builder.parse(IOUtils.toInputStream(_xmlContent));
-		}
-	}
-	public String evaluate(String xpathStr) {
-		if (this.xPath == null) {
-			this.xPath = new EnterpriseXPathFactory().newXPath();
-		}
-		this.xPath.setNamespaceContext(new NamespaceContext() {
-			public Iterator getPrefixes(String namespaceURI) {
-				return null;
-			}
+    @Test
+    public void testRemoveNode() throws Exception {
+        String xml = "<root>" +
+                "<a>1</a>" +
+                "<a>2</a>" +
+                "<b>3</b>" +
+                "</root>";
 
-			public String getPrefix(String namespaceURI) {
-				return null;
-			}
+        XPathParser parser = new XPathParser(xml);
 
-			public String getNamespaceURI(String prefix) {
-				if (prefix.equals("")) {
-					return XPathParser.this.document.lookupNamespaceURI(null);
-				}
-				return XPathParser.this.document.lookupNamespaceURI(prefix);
-			}
-		});
-		String result = "";
-		try {
-			NodeList nodeList = (NodeList) this.xPath.evaluate(xpathStr, this.document, XPathConstants.NODESET);
-
-			if ((nodeList == null) || (nodeList.getLength() == 0)) {
-				logger.warn(">>>SystemWarning: this node is not existing, xpath: {}", xpathStr);
-			} else if (nodeList.getLength() > 0) {
-				if (nodeList.getLength() > 1) {
-					logger.info("found {} nodes, will get first one value, xpath: {}",
-							Integer.valueOf(nodeList.getLength()), xpathStr);
-				}
-
-				result = nodeList.item(0).getTextContent();
-			}
-		} catch (XPathExpressionException e) {
-			logger.error(">>>SystemError: extract value error, path: {}", xpathStr);
-		}
-
-		return StringUtils.trim(result);
-	}
-
-	public String getXmlContent() throws Exception {
-		TransformerFactory transformerFactory= TransformerFactory.newInstance();
-		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
-		transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		Transformer transformer = transformerFactory.newTransformer();
-		transformer.transform(new DOMSource(this.document), new StreamResult(bos));
-		return bos.toString();
-	}
-
-	public void removeNode(String xpathStr) {
-		XPath xPath = XPathFactory.newInstance().newXPath();
-		xPath.setNamespaceContext(new NamespaceContext() {
-			public Iterator getPrefixes(String namespaceURI) {
-				return null;
-			}
-
-			public String getPrefix(String namespaceURI) {
-				return null;
-			}
-
-			public String getNamespaceURI(String prefix) {
-				if (prefix.equals("")) {
-					return XPathParser.this.document.lookupNamespaceURI(null);
-				}
-				return XPathParser.this.document.lookupNamespaceURI(prefix);
-			}
-		});
-		try {
-			NodeList nodeList = (NodeList) xPath.evaluate(xpathStr, this.document, XPathConstants.NODESET);
-
-			if ((nodeList != null) && (nodeList.getLength() > 0)) {
-				for (int i = 0; i < nodeList.getLength(); i++)
-					nodeList.item(i).getParentNode().removeChild(nodeList.item(i));
-			}
-		} catch (XPathExpressionException e) {
-			logger.error(String.format("remove node failed, path: %s", new Object[] { xpathStr }), e);
-		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		String xml = "<a><b>1</b><b>2</b><c>3</c><d>4</d></a>";
-		XPathParser parser = new XPathParser(xml);
-		parser.removeNode("/a/b");
-		System.out.println(parser.getXmlContent());
-	}
-}
+        // 删除多个节点
+        parser.removeNode("/root/a");
