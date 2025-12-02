@@ -1,297 +1,140 @@
-// 原代码（会报错）
-File uvtTmpDateFolder = new File(uvtTempFolder.getAbsolutePath()
-		+ File.separator
-		+ DateFormatUtils.ISO_DATE_FORMAT.format(new Date()));
+package com.scb.mxg.mls.rt.gfi.utils;
 
-// 修复后
-String dateFolderName = DateFormatUtils.ISO_DATE_FORMAT.format(new Date());
-Path uvtTmpDatePath = uvtTempFolder.toPath().resolve(dateFolderName).normalize();
-if (!uvtTmpDatePath.startsWith(uvtTempFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in date folder path");
-}
-File uvtTmpDateFolder = uvtTmpDatePath.toFile();
+import com.saxonica.config.EnterpriseXPathFactory;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
-
-
-// 原代码（会报错）
-File expectedMxml = new File(expectedMxmlFolder.getAbsolutePath()
-		+ File.separator + externalId + ".xml");
-
-// 修复后
-Path expectedMxmlPath = expectedMxmlFolder.toPath().resolve(externalId + ".xml").normalize();
-if (!expectedMxmlPath.startsWith(expectedMxmlFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in expected MXML path: " + externalId);
-}
-File expectedMxml = expectedMxmlPath.toFile();
-
+import javax.xml.XMLConstants;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.ByteArrayOutputStream;
+import java.util.Iterator;
 
 
+public final class XPathParser {
+	private static final Logger logger = LoggerFactory.getLogger(XPathParser.class);
 
-// 原代码（会报错）
-String generatedMxmlPath = uvtTmpDateFolder.getAbsolutePath()
-		+ File.separator + externalId + ".generated.xml";
+	private Document document = null;
+	private XPath xPath;
 
-// 修复后
-Path generatedPath = uvtTmpDateFolder.toPath().resolve(externalId + ".generated.xml").normalize();
-if (!generatedPath.startsWith(uvtTmpDateFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in generated MXML path: " + externalId);
-}
-String generatedMxmlPath = generatedPath.toString();
+	public XPathParser() {
+	}
 
+	public XPathParser(String xmlContent) throws Exception {
+		_initDocument(StringUtils.trimToEmpty(xmlContent));
+	}
 
+	private void _initDocument(String xmlContent) throws Exception {
+		if (this.document == null) {
+			String _xmlContent = xmlContent.replaceAll("xmlns\\s*=", "xmlns:default_namespace_prefix=");
 
-
-
-// 原代码（会报错）
-expectedMxmlPath = uvtTmpDateFolder.getAbsolutePath()
-		+ File.separator + externalId + ".expected.xml";
-
-// 修复后
-Path expectedBackupPath = uvtTmpDateFolder.toPath().resolve(externalId + ".expected.xml").normalize();
-if (!expectedBackupPath.startsWith(uvtTmpDateFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in expected backup path: " + externalId);
-}
-expectedMxmlPath = expectedBackupPath.toString();
-
-
-
-
-
-// 原代码（会报错）
-String originalMsgPath = uvtTmpDateFolder.getAbsolutePath()
-		+ File.separator + "original." + gid + ".xml";
-
-// 修复后
-Path originalMsgFilePath = uvtTmpDateFolder.toPath().resolve("original." + gid + ".xml").normalize();
-if (!originalMsgFilePath.startsWith(uvtTmpDateFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in original message path: " + gid);
-}
-String originalMsgPath = originalMsgFilePath.toString();
-
-
-
-
-
-
-
-
-// 原代码（会报错）
-String inputFpmlPath = uvtTmpDateFolder.getAbsolutePath()
-		+ File.separator + externalId + ".input.xml";
-
-// 修复后
-Path inputFpmlFilePath = uvtTmpDateFolder.toPath().resolve(externalId + ".input.xml").normalize();
-if (!inputFpmlFilePath.startsWith(uvtTmpDateFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in input FPML path: " + externalId);
-}
-String inputFpmlPath = inputFpmlFilePath.toString();
-
-
-
-
-
-
-
-
-// 原代码（会报错）
-IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS,
-		new FileOutputStream(uvtTmpDateFolder.getAbsolutePath()
-				+ File.separator + externalId + ".comparison.txt"));
-
-// 修复后
-Path comparisonFilePath = uvtTmpDateFolder.toPath().resolve(externalId + ".comparison.txt").normalize();
-if (!comparisonFilePath.startsWith(uvtTmpDateFolder.toPath())) {
-    throw new SecurityException("Path traversal detected in comparison file path: " + externalId);
-}
-IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS,
-    new FileOutputStream(comparisonFilePath.toString()));
-
-
-
-Path baseDir = uvtTmpDateFolder.toPath();
-Path comparisonFilePath = baseDir.resolve(externalId + ".comparison.txt").normalize();
-
-// 再次检查是否仍在限定目录下
-if (!comparisonFilePath.toAbsolutePath().startsWith(baseDir.toAbsolutePath())) {
-    throw new SecurityException("Path traversal detected in comparison file path: " + externalId);
-}
-
-// 使用 NIO Files.newOutputStream 代替 FileOutputStream（Sonar 推荐）
-try (OutputStream os = Files.newOutputStream(comparisonFilePath)) {
-    IOUtils.writeLines(email.getContents(), IOUtils.LINE_SEPARATOR_WINDOWS, os);
-}
-
-
-110
-Path expectedBackupPath = uvtTmpDateFolder.toPath().resolve(externalId + ".expected.xml").normalize();
-			if (!expectedBackupPath.startsWith(uvtTmpDateFolder.toPath())) {
-				throw new SecurityException("Path traversal detected in expected backup path: " + externalId);
-			}
-			IOUtils.write(expectedMxmlStr, new FileOutputStream(
-					expectedBackupPath.toString()), "UTF-8");
-
-
-
-____
-Path baseDir = uvtTmpDateFolder.toPath();
-Path expectedBackupPath = baseDir.resolve(externalId + ".expected.xml").normalize();
-
-// 路径穿越保护
-if (!expectedBackupPath.toAbsolutePath().startsWith(baseDir.toAbsolutePath())) {
-    throw new SecurityException("Path traversal detected in expected backup path: " + externalId);
-}
-
-// 使用 NIO API 写文件（Sonar 推荐）
-try (OutputStream os = Files.newOutputStream(expectedBackupPath)) {
-    IOUtils.write(expectedMxmlStr, os, "UTF-8");
-}
-___
-
-195
-Path originalMsgFilePath = uvtTmpDateFolder.toPath().resolve("original." + gid + ".xml").normalize();
-		if (!originalMsgFilePath.startsWith(uvtTmpDateFolder.toPath())) {
-			throw new SecurityException("Path traversal detected in original message path: " + gid);
+			DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+			builderFactory.setExpandEntityReferences(false);
+			builderFactory.setNamespaceAware(true);
+			builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+			DocumentBuilder builder = builderFactory.newDocumentBuilder();
+			this.document = builder.parse(IOUtils.toInputStream(_xmlContent));
 		}
-		String originalMsgPath = originalMsgFilePath.toString();
+	}
+	public String evaluate(String xpathStr) {
+		if (this.xPath == null) {
+			this.xPath = new EnterpriseXPathFactory().newXPath();
+		}
+		this.xPath.setNamespaceContext(new NamespaceContext() {
+			public Iterator getPrefixes(String namespaceURI) {
+				return null;
+			}
 
+			public String getPrefix(String namespaceURI) {
+				return null;
+			}
 
+			public String getNamespaceURI(String prefix) {
+				if (prefix.equals("")) {
+					return XPathParser.this.document.lookupNamespaceURI(null);
+				}
+				return XPathParser.this.document.lookupNamespaceURI(prefix);
+			}
+		});
+		String result = "";
+		try {
+			NodeList nodeList = (NodeList) this.xPath.evaluate(xpathStr, this.document, XPathConstants.NODESET);
 
-？。
-Path baseDir = uvtTmpDateFolder.toPath();
-Path originalMsgFilePath = baseDir.resolve("original." + gid + ".xml").normalize();
+			if ((nodeList == null) || (nodeList.getLength() == 0)) {
+				logger.warn(">>>SystemWarning: this node is not existing, xpath: {}", xpathStr);
+			} else if (nodeList.getLength() > 0) {
+				if (nodeList.getLength() > 1) {
+					logger.info("found {} nodes, will get first one value, xpath: {}",
+							Integer.valueOf(nodeList.getLength()), xpathStr);
+				}
 
-// 路径穿越检查（使用绝对路径）
-if (!originalMsgFilePath.toAbsolutePath().startsWith(baseDir.toAbsolutePath())) {
-    throw new SecurityException("Path traversal detected in original message path: " + gid);
+				result = nodeList.item(0).getTextContent();
+			}
+		} catch (XPathExpressionException e) {
+			logger.error(">>>SystemError: extract value error, path: {}", xpathStr);
+		}
+
+		return StringUtils.trim(result);
+	}
+
+	public String getXmlContent() throws Exception {
+		TransformerFactory transformerFactory= TransformerFactory.newInstance();
+		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+		transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		Transformer transformer = transformerFactory.newTransformer();
+		transformer.transform(new DOMSource(this.document), new StreamResult(bos));
+		return bos.toString();
+	}
+
+	public void removeNode(String xpathStr) {
+		XPath xPath = XPathFactory.newInstance().newXPath();
+		xPath.setNamespaceContext(new NamespaceContext() {
+			public Iterator getPrefixes(String namespaceURI) {
+				return null;
+			}
+
+			public String getPrefix(String namespaceURI) {
+				return null;
+			}
+
+			public String getNamespaceURI(String prefix) {
+				if (prefix.equals("")) {
+					return XPathParser.this.document.lookupNamespaceURI(null);
+				}
+				return XPathParser.this.document.lookupNamespaceURI(prefix);
+			}
+		});
+		try {
+			NodeList nodeList = (NodeList) xPath.evaluate(xpathStr, this.document, XPathConstants.NODESET);
+
+			if ((nodeList != null) && (nodeList.getLength() > 0)) {
+				for (int i = 0; i < nodeList.getLength(); i++)
+					nodeList.item(i).getParentNode().removeChild(nodeList.item(i));
+			}
+		} catch (XPathExpressionException e) {
+			logger.error(String.format("remove node failed, path: %s", new Object[] { xpathStr }), e);
+		}
+	}
+
+	public static void main(String[] args) throws Exception {
+		String xml = "<a><b>1</b><b>2</b><c>3</c><d>4</d></a>";
+		XPathParser parser = new XPathParser(xml);
+		parser.removeNode("/a/b");
+		System.out.println(parser.getXmlContent());
+	}
 }
-
-// 如果你只是要路径，用 Path，而不是 String
-Path originalMsgPath = originalMsgFilePath;
-
-。。
-203
-Path inputFpmlFilePath = uvtTmpDateFolder.toPath().resolve(externalId + ".input.xml").normalize();
-if (!inputFpmlFilePath.startsWith(uvtTmpDateFolder.toPath())) {
-	throw new SecurityException("Path traversal detected in input FPML path: " + externalId);
-}
-String inputFpmlPath = inputFpmlFilePath.toString();
-IOUtils.write(singleLegFixML, new FileOutputStream(inputFpmlPath), "UTF-8");
-
-___
-Path baseDir = uvtTmpDateFolder.toPath();
-Path inputFpmlFilePath = baseDir.resolve(externalId + ".input.xml").normalize();
-
-// 路径穿越检查（使用绝对路径）
-if (!inputFpmlFilePath.toAbsolutePath().startsWith(baseDir.toAbsolutePath())) {
-    throw new SecurityException("Path traversal detected in input FPML path: " + externalId);
-}
-
-// 使用 NIO Files.newOutputStream（Sonar 推荐）
-try (OutputStream os = Files.newOutputStream(inputFpmlFilePath)) {
-    IOUtils.write(singleLegFixML, os, "UTF-8");
-}
-
-___
-
-44
-File f = new File(outputFolder.getAbsolutePath() + File.separator
-				+ "GFI-" + new Date().getTime() + ".xls");
-
-___
-Path baseDir = outputFolder.toPath();
-String fileName = "GFI-" + System.currentTimeMillis() + ".xls";
-
-Path outputPath = baseDir.resolve(fileName).normalize();
-
-// 转成 File 类型（如果你后面需要 File）
-File f = outputPath.toFile();
-
-___
-
-
-126
-File f = new File(outputFolder.getAbsolutePath() + File.separator
-				+ "GFI-" + new Date().getTime() + ".csv");
-___
-Path baseDir = outputFolder.toPath();
-
-String fileName = "GFI-" + System.currentTimeMillis() + ".csv";
-Path outputPath = baseDir.resolve(fileName).normalize();
-
-// 如果需要严格路径检查（可加可不加）
-if (!outputPath.toAbsolutePath().startsWith(baseDir.toAbsolutePath())) {
-    throw new SecurityException("Invalid output file path");
-}
-
-// 转成 File（如果后续代码依赖 File 类型）
-File f = outputPath.toFile();
-
-___
-
-
-74 / 75
-uvtInputFolder = new File(System.getProperty("root_dir")
-                + File.separator + "regression_input");
-if(!uvtInputFolder.exists()) {
-    uvtInputFolder.mkdirs();
-}
-String filePath = uvtInputFolder.getPath() + "/generate_report.flag";
-File file = new File(filePath);
-
-___
-Path rootDir = Paths.get(System.getProperty("root_dir"));
-Path uvtInputFolderPath = rootDir.resolve("regression_input").normalize();
-
-if (!uvtInputFolderPath.toAbsolutePath().startsWith(rootDir.toAbsolutePath())) {
-    throw new SecurityException("Invalid root_dir path");
-}
-
-Files.createDirectories(uvtInputFolderPath);
-
-Path filePath = uvtInputFolderPath.resolve("generate_report.flag").normalize();
-
-if (!filePath.toAbsolutePath().startsWith(uvtInputFolderPath.toAbsolutePath())) {
-    throw new SecurityException("Invalid file path detected");
-}
-
-File file = filePath.toFile();
-
-___
-
-104 / 105
-String mxml = exchange.getIn().getBody(String.class);
-FileUtils.write(new File(outputMxmlFolder.getAbsolutePath()+File.separator+externalId+".xml"),mxml);
-File expectedMxml = new File(expectedMxmlFolder.getAbsolutePath()
-
-
-__
-
-// 读取内容
-String mxml = exchange.getIn().getBody(String.class);
-
-// 基础目录
-Path outputBase = outputMxmlFolder.toPath();
-
-// 构建目标文件名
-Path outputMxmlPath = outputBase.resolve(externalId + ".xml").normalize();
-
-// 路径穿越检查
-if (!outputMxmlPath.toAbsolutePath().startsWith(outputBase.toAbsolutePath())) {
-    throw new SecurityException("Invalid output MXML path: " + externalId);
-}
-
-// 写文件（使用 NIO 推荐写法）
-Files.write(outputMxmlPath, mxml.getBytes(StandardCharsets.UTF_8));
-
-
-// expected 文件同样修复
-Path expectedBase = expectedMxmlFolder.toPath();
-Path expectedMxmlPath = expectedBase.resolve(externalId + ".xml").normalize();
-
-if (!expectedMxmlPath.toAbsolutePath().startsWith(expectedBase.toAbsolutePath())) {
-    throw new SecurityException("Invalid expected MXML path: " + externalId);
-}
-
-// 如需 File 类型
-File expectedMxml = expectedMxmlPath.toFile();
-
