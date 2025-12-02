@@ -1,157 +1,182 @@
-package com.scb.mxg.mls.rt.gfi.processor;
-import com.scb.mxg.mls.rt.gfi.lookup.StaticDataDict;
-import com.scb.mxg.mls.rt.gfi.utils.RegressionAssist;
-import com.scb.mxg.mls.rt.gfi.utils.RegressionAssist.RegressionResult;
-import com.scb.mxg.mls.rt.gfi.utils.XPathParser;
-import com.scb.mxg.mls.rt.gfi.utils.XmlUtils;
-import org.apache.camel.Exchange;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmlunit.builder.DiffBuilder;
-import org.xmlunit.builder.Input;
-import org.xmlunit.diff.Diff;
-import org.xmlunit.diff.Difference;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-public final class RegressionTestProcessor extends BaseProcessor {
-    private final static Logger LOG = LoggerFactory
-            .getLogger(RegressionTestProcessor.class);
-    private File expectedMxmlFolder;
-    private File outputMxmlFolder;
-    private List<String> ignoreXpathList = new ArrayList<String>();
-    private File uvtInputFolder;
-    public RegressionTestProcessor() {
-        outputMxmlFolder = new File(System.getProperty("root_dir")
-                + File.separator + "regression_output");
-        if (!outputMxmlFolder.exists()) {
-            outputMxmlFolder.mkdirs();
-        }
-        LOG.info("regression output mxml folder: {}",
-                outputMxmlFolder.getAbsolutePath());
-        expectedMxmlFolder = new File(System.getProperty("root_dir")
-                + File.separator + "regression_expected");
-        if (!expectedMxmlFolder.exists()) {
-            expectedMxmlFolder.mkdirs();
-        }
-        LOG.info("regression expected mxml folder: {}",
-                expectedMxmlFolder.getAbsolutePath());
-        File xpathIgnoreConfigFile = new File(System.getProperty("root_dir")
-                + File.separator + "xpath_ignore.config");
-        LOG.info("xpath ignoring configuration file: {}",
-                xpathIgnoreConfigFile.getAbsolutePath());
-        if (xpathIgnoreConfigFile.exists()) {
-            try {
-                ignoreXpathList = FileUtils.readLines(xpathIgnoreConfigFile,
-                        "UTF-8");
-                LOG.info("below xpath will be ignored in mxml comparison");
-                LOG.info(ignoreXpathList.toString());
-            } catch (IOException e) {
-                LOG.info("load xpath ignoring config", e);
-            }
-        } else {
-            LOG.info("xpath ignoreing configuration file is not existing.");
-        }
+@RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.management.*","javax.script.*"})
+@PrepareForTest({
+        StaticDataDict.class,
+        RegressionAssist.class,
+        XmlUtils.class,
+        FileUtils.class,
+        XPathParser.class,
+        DiffBuilder.class
+})
+public class RegressionTestProcessorTest {
+
+    private RegressionTestProcessor processor;
+    private Exchange exchange;
+
+    private Path rootDir;
+    private Path inputDir;
+    private Path expectedDir;
+    private Path outputDir;
+
+    @Before
+    public void setUp() throws Exception {
+        // 创建临时 root_dir
+        rootDir = Files.createTempDirectory("regression_root");
+        System.setProperty("root_dir", rootDir.toString());
+
+        inputDir = rootDir.resolve("regression_input");
+        expectedDir = rootDir.resolve("regression_expected");
+        outputDir = rootDir.resolve("regression_output");
+
+        Files.createDirectories(inputDir);
+        Files.createDirectories(expectedDir);
+        Files.createDirectories(outputDir);
+
+        // Mock Exchange
+        exchange = Mockito.mock(Exchange.class);
+        Mockito.when(exchange.getIn()).thenReturn(Mockito.mock(org.apache.camel.Message.class));
+        Mockito.when(exchange.getIn().getBody(String.class)).thenReturn("<fixML/>");
+
+        // Mock 静态类
+        PowerMockito.mockStatic(StaticDataDict.class);
+        PowerMockito.mockStatic(RegressionAssist.class);
+        PowerMockito.mockStatic(XmlUtils.class);
+        PowerMockito.mockStatic(FileUtils.class);
+        PowerMockito.mockStatic(DiffBuilder.class);
+
+        // 默认：没有错误
+        Set<String> empty = new HashSet<>();
+        Mockito.when(StaticDataDict.getErrorList()).thenReturn(empty);
+
+        // 默认 XPathParser mock
+        PowerMockito.whenNew(XPathParser.class)
+                .withAnyArguments()
+                .thenReturn(mockXPath());
+
+        // 默认 XmlUtils.formatXml
+        Mockito.when(XmlUtils.formatXml(Mockito.anyString()))
+                .thenAnswer(i -> i.getArguments()[0]);
+
+        processor = new RegressionTestProcessor();
     }
-    @Override
-    
-    public void handleExchange(Exchange exchange) throws Exception {
-        Path rootDir = Paths.get(System.getProperty("root_dir"));
-        Path uvtInputFolderPath = rootDir.resolve("regression_input").normalize();
-        if (!uvtInputFolderPath.toAbsolutePath().startsWith(rootDir.toAbsolutePath())) {
-            throw new SecurityException("Invalid root_dir path");
-        }
-        Files.createDirectories(uvtInputFolderPath);
-        Path filePath = uvtInputFolderPath.resolve("generate_report.flag").normalize();
-        if (!filePath.toAbsolutePath().startsWith(uvtInputFolderPath.toAbsolutePath())) {
-            throw new SecurityException("Invalid file path detected");
-        }
-        File file = filePath.toFile();
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                LOG.error("Exception when RegressionTestProcessor handleExchange!", e);            }
-        }
-        String singleLegFixML = StringUtils.trimToEmpty(exchange.getIn().getBody(
-                String.class));
-        XPathParser intraXmlParser = new XPathParser(singleLegFixML);
-        String legType = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegType"));
-        String tradeExternalId = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeExternalId"));
-        String maxLegVal = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.MaxLegVal"));
-        String legID =intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegID"));
-        String legSubID=intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegSubID"));
-        String externalId = getFullTradeId(tradeExternalId,legType,maxLegVal,legID,legSubID);
-        LOG.info(externalId);
-        // transform
-        transformStages(exchange, singleLegFixML);
-        Set<String> errors = StaticDataDict.getErrorList();
-        if (CollectionUtils.isNotEmpty(errors)) {
-            RegressionAssist.addRegressionResult(new RegressionResult(
-                    externalId, "failed", errors.toString()));
-        } else {
-            // compare
-            String mxml = exchange.getIn().getBody(String.class);
-            Path outputBase = outputMxmlFolder.toPath();
-            Path outputMxmlPath = outputBase.resolve(externalId + ".xml").normalize();
-            if (!outputMxmlPath.toAbsolutePath().startsWith(outputBase.toAbsolutePath())) {
-                throw new SecurityException("Invalid output MXML path: " + externalId);
-            }
-            Files.write(outputMxmlPath, mxml.getBytes(StandardCharsets.UTF_8));
-            Path expectedBase = expectedMxmlFolder.toPath();
-            Path expectedMxmlPath = expectedBase.resolve(externalId + ".xml").normalize();
-            if (!expectedMxmlPath.toAbsolutePath().startsWith(expectedBase.toAbsolutePath())) {
-                throw new SecurityException("Invalid expected MXML path: " + externalId);
-            }
-            File expectedMxml = expectedMxmlPath.toFile();
-            if (expectedMxml.exists()) {
-                String expectedMxmlStr = FileUtils.readFileToString(
-                        expectedMxml, "UTF-8");
-                XPathParser mxmlParser = new XPathParser(mxml);
-                XPathParser expectedParser = new XPathParser(expectedMxmlStr);
-                for (String xpath : ignoreXpathList) {
-                    if (StringUtils.isBlank(xpath)) {
-                        continue;
-                    }
-                    mxmlParser.removeNode(StringUtils.trim(xpath));
-                    expectedParser.removeNode(StringUtils.trim(xpath));
-                }
-                Diff diff = DiffBuilder
-                        .compare(
-                                Input.fromString(StringUtils.trim(XmlUtils
-                                        .formatXml(expectedMxmlStr))))
-                        .withTest(
-                                Input.fromString(StringUtils.trim(XmlUtils
-                                        .formatXml(mxml))))
-                        .build();
-                if (diff.hasDifferences()) {
-                    Iterator<Difference> differences = diff.getDifferences()
-                            .iterator();
-                    Difference difference = null;
-                    List<String> differenceList = new ArrayList<>();
-                    while (differences.hasNext()) {
-                        difference = differences.next();
-                        differenceList.add(difference.toString());
-                    }
-                    RegressionAssist.addRegressionResult(new RegressionResult(
-                            externalId, "diff", StringUtils.join(
-                            differenceList.toArray(), "\n")));
-                } else {
-                    RegressionAssist.addRegressionResult(new RegressionResult(
-                            externalId, "match", ""));
-                }
-            } else {
-                RegressionAssist.addRegressionResult(new RegressionResult(
-                        externalId, "failed", "excepted file is not existing: "
-                        + expectedMxml.getAbsolutePath()));
-            }
-        }
+
+    private XPathParser mockXPath() throws Exception {
+        XPathParser parser = Mockito.mock(XPathParser.class);
+        Mockito.when(parser.evaluate(Mockito.anyString())).thenReturn("X");
+        return parser;
+    }
+
+    // ---------- 1. flag 文件自动创建 ----------
+    @Test
+    public void testFlagFileCreated() throws Exception {
+        File flag = inputDir.resolve("generate_report.flag").toFile();
+        Assert.assertFalse(flag.exists());
+
+        processor.handleExchange(exchange);
+
+        Assert.assertTrue(flag.exists());
+    }
+
+    // ---------- 2. StaticDataDict 有错误 → failed ----------
+    @Test
+    public void testErrorListTriggersFailed() throws Exception {
+        Set<String> errors = new HashSet<>();
+        errors.add("ERROR_X");
+        Mockito.when(StaticDataDict.getErrorList()).thenReturn(errors);
+
+        processor.handleExchange(exchange);
+
+        PowerMockito.verifyStatic(RegressionAssist.class);
+        RegressionAssist.addRegressionResult(
+                Mockito.argThat(r -> r.status.equals("failed"))
+        );
+    }
+
+    // ---------- 3. expected 存在 & 匹配 ----------
+    @Test
+    public void testMatchCase() throws Exception {
+        // expected XML
+        File expected = expectedDir.resolve("X.xml").toFile();
+        FileUtils.writeStringToFile(expected, "<a>1</a>", "UTF-8");
+
+        // Mock reading expected
+        Mockito.when(FileUtils.readFileToString(expected, "UTF-8"))
+                .thenReturn("<a>1</a>");
+
+        // Mock DiffBuilder → no differences
+        Diff fakeDiff = Mockito.mock(Diff.class);
+        Mockito.when(fakeDiff.hasDifferences()).thenReturn(false);
+
+        PowerMockito.mockStatic(DiffBuilder.class);
+        DiffBuilder builder = Mockito.mock(DiffBuilder.class);
+        Mockito.when(DiffBuilder.compare(Mockito.any()))
+                .thenReturn(builder);
+        Mockito.when(builder.withTest(Mockito.any())).thenReturn(builder);
+        Mockito.when(builder.build()).thenReturn(fakeDiff);
+
+        processor.handleExchange(exchange);
+
+        PowerMockito.verifyStatic(RegressionAssist.class);
+        RegressionAssist.addRegressionResult(
+                Mockito.argThat(r -> r.status.equals("match"))
+        );
+    }
+
+    // ---------- 4. expected 存在 & 有差异 ----------
+    @Test
+    public void testDiffCase() throws Exception {
+        File expected = expectedDir.resolve("X.xml").toFile();
+        FileUtils.writeStringToFile(expected, "<a>1</a>", "UTF-8");
+
+        Mockito.when(FileUtils.readFileToString(expected, "UTF-8"))
+                .thenReturn("<a>1</a>");
+
+        Difference diffEntry = Mockito.mock(Difference.class);
+        Mockito.when(diffEntry.toString()).thenReturn("DIFF!");
+
+        Diff fakeDiff = Mockito.mock(Diff.class);
+        Mockito.when(fakeDiff.hasDifferences()).thenReturn(true);
+        Mockito.when(fakeDiff.getDifferences())
+                .thenReturn(Collections.singletonList(diffEntry));
+
+        PowerMockito.mockStatic(DiffBuilder.class);
+        DiffBuilder builder = Mockito.mock(DiffBuilder.class);
+        Mockito.when(DiffBuilder.compare(Mockito.any()))
+                .thenReturn(builder);
+        Mockito.when(builder.withTest(Mockito.any())).thenReturn(builder);
+        Mockito.when(builder.build()).thenReturn(fakeDiff);
+
+        processor.handleExchange(exchange);
+
+        PowerMockito.verifyStatic(RegressionAssist.class);
+        RegressionAssist.addRegressionResult(
+                Mockito.argThat(r -> r.status.equals("diff"))
+        );
+    }
+
+    // ---------- 5. expected 文件不存在 ----------
+    @Test
+    public void testExpectedMissing() throws Exception {
+
+        processor.handleExchange(exchange);
+
+        PowerMockito.verifyStatic(RegressionAssist.class);
+        RegressionAssist.addRegressionResult(
+                Mockito.argThat(r -> r.status.equals("failed"))
+        );
+    }
+
+    // ---------- 6. 路径逃逸触发 SecurityException ----------
+    @Test(expected = SecurityException.class)
+    public void testPathEscapeSecurity() throws Exception {
+        // root_dir = /tmp/a
+        // Exchange body 改造成逃逸路径
+        Mockito.when(exchange.getIn().getBody(String.class)).thenReturn("<fixML/>");
+
+        // 修改 System.getProperty 让路径在 normalize 后越界
+        System.setProperty("root_dir", "/etc");
+
+        RegressionTestProcessor p = new RegressionTestProcessor();
+        p.handleExchange(exchange);
     }
 }
