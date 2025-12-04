@@ -5,138 +5,222 @@ import com.scb.mxg.mls.trade.TradeEventType;
 import com.scb.mxg.mls.utils.XPathParser;
 import com.scb.mxg.mls.vo.Journal;
 import org.apache.camel.Exchange;
+import org.apache.camel.Message;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public final class StpProcessor extends BaseProcessor {
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({LoggerFactory.class, StringUtils.class, StpProcessor.class, XPathParser.class, 
+                NamedParameterJdbcTemplate.class, UUID.class})
+public class StpProcessorTest {
+
+    @Spy
+    @InjectMocks
+    private StpProcessor stpProcessor;
+
+    @Mock
+    private Exchange exchange;
+    
+    @Mock
+    private Message inMessage;
+    
+    @Mock
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-	private final static Logger LOG = LoggerFactory
-			.getLogger(StpProcessor.class);
-
-	@Override
-	public void handleExchange(Exchange exchange) throws Exception {
-        String singleLegFixML = StringUtils.trimToEmpty(exchange.getIn().getBody(
-                String.class));
-        XPathParser intraXmlParser = new XPathParser(singleLegFixML);
-        String legType = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegType"));
-        String legSubId=intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegSubID"));
-        String hedgeCurrency="";
-//        if("HedgeLegs".equals(legType)){
-        if("HedgeLegs".equals(legType) && "2".equals(legSubId)){
-            hedgeCurrency=intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.hedgeCurrency"));
-        }
-
-        if("2".equals(legSubId) && hedgeCurrency.isEmpty()){
-            LOG.info("ignore the invalid hedge leg!");
-        }else{
-
-            /******************* step 1: prepare basic data ********************/
-            String originalTrackingId = exchange.getProperty(ORIGINAL_TRACKING_ID,String.class);
-            namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(mlsDbJdbcTemplate);
-
-            String tradeExternalId = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeExternalId"));
-            String maxLegVal = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.MaxLegVal"));
-            String legID =intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegID"));
-            String legSubID=intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.LegSubID"));
-            String originalId = getFullTradeId(tradeExternalId,legType,maxLegVal,legID,legSubID);
-
-            String originalSys = CONFIG.getString("gfi.originalSys");
-            String version = UUID.randomUUID().toString();
-
-            String tradeType = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeType"));
-            String tradeDateStr = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.tradeDate"));
-            String trader = intraXmlParser.evaluate(CONFIG.getString("gfi.xpath.trader"));
-            LOG.info(
-                    "process stp, original tracking Id id: {}, originalId: {}, originalSys: {}, version: {}",
-                    originalTrackingId, originalId, originalSys, version);
-
-            boolean isExisting = isExisting(originalId, originalSys);
-
-            String tradeEvent = TradeEventType.NEW;
-            // ============== save singleLegFixML in message
-            Journal inJournal = new Journal();
-            inJournal.setContent(singleLegFixML);
-            inJournal.setStatus(Journal.RECEIVED);
-            inJournal.setReferId(originalId);
-            inJournal.setType(tradeEvent);
-            inJournal.setTrackingId(originalTrackingId);
-            saveJournal(exchange, inJournal);
-
-            exchange.setProperty("_originalId", originalId);
-            exchange.setProperty("_originalSys", originalSys);
-            exchange.setProperty("_version", version);
-            exchange.setProperty("_inJournalId", inJournal.getId());
-            exchange.setProperty("_trader",trader);
-            exchange.setProperty("_trade_id",originalId);
-            exchange.setProperty("_tradeEvent",tradeEvent);
-            exchange.setProperty("_intraXml",singleLegFixML);
-
-            // check the duplication of trade
-            if (isExisting) {
-                // =============== record event
-                TradeEvent event = new TradeEvent();
-                event.setOriginalId(originalId);
-                event.setOriginalSys(originalSys);
-                event.setVersion(version);
-                event.setTrackingId(inJournal.getId());
-                event.setEventSource(originalSys);
-                event.setAction(tradeEvent);
-                event.setSubAction(TradeEventType.DUPLICATE);
-                event.setDetails("");
-                event.setComments("");
-                event.setReferSysStatus("");
-                event.setReferSysTradeId("");
-                event.setTradeDate(DateFormatUtils.ISO_DATE_FORMAT.format(DateUtils
-                        .parseDate(tradeDateStr, "yyyyMMdd")));
-                event.setTradeType(tradeType);
-                recordTradeEvent(exchange, event);
-            } else {
-                // =============== record event
-                TradeEvent event = new TradeEvent();
-                event.setOriginalId(originalId);
-                event.setOriginalSys(originalSys);
-                event.setVersion(version);
-                event.setTrackingId(inJournal.getId());
-                event.setEventSource(originalSys);
-                event.setAction(tradeEvent);
-                event.setSubAction("");
-                event.setDetails("");
-                event.setComments("");
-                event.setReferSysStatus("");
-                event.setReferSysTradeId("");
-                event.setTradeDate(DateFormatUtils.ISO_DATE_FORMAT.format(DateUtils
-                        .parseDate(tradeDateStr, "yyyyMMdd")));
-                event.setTradeType(tradeType);
-                recordTradeEvent(exchange, event);
-
-                // transform to murex
-                transformToMurex(exchange, singleLegFixML, tradeEvent, originalTrackingId,
-                        originalId, originalSys, version, inJournal.getId());
+    
+    @Mock
+    private JdbcTemplate mlsDbJdbcTemplate;
+    
+    @Mock
+    private XPathParser intraXmlParser;
+    
+    @Mock
+    private Logger logger;
+    
+    private static final String ORIGINAL_TRACKING_ID = "test-tracking-id";
+    private static final String SINGLE_LEG_FIX_ML = "<Trade><LegType>HedgeLegs</LegType><LegSubID>2</LegSubID><TradeExternalId>TRD123</TradeExternalId><MaxLegVal>100</MaxLegVal><LegID>1</LegID><TradeType>FX</TradeType><TradeDate>20230101</TradeDate><Trader>JohnDoe</Trader></Trade>";
+    
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        
+        // Mock static methods
+        PowerMockito.mockStatic(LoggerFactory.class);
+        when(LoggerFactory.getLogger(StpProcessor.class)).thenReturn(logger);
+        
+        // Mock StringUtils
+        PowerMockito.mockStatic(StringUtils.class);
+        when(StringUtils.trimToEmpty(anyString())).thenReturn(SINGLE_LEG_FIX_ML);
+        
+        // Mock exchange properties
+        when(exchange.getProperty(anyString(), eq(String.class)))
+            .thenAnswer(invocation -> {
+                String key = invocation.getArgument(0);
+                if (StpProcessor.ORIGINAL_TRACKING_ID.equals(key)) {
+                    return ORIGINAL_TRACKING_ID;
+                }
+                return null;
+            });
+        when(exchange.getIn()).thenReturn(inMessage);
+        when(inMessage.getBody(String.class)).thenReturn(SINGLE_LEG_FIX_ML);
+        
+        // Mock CONFIG - 假设CONFIG是一个可访问的静态对象
+        mockConfigValues();
+        
+        // 关键：模拟NamedParameterJdbcTemplate的构造函数
+        PowerMockito.whenNew(NamedParameterJdbcTemplate.class)
+                   .withArguments(mlsDbJdbcTemplate)
+                   .thenReturn(namedParameterJdbcTemplate);
+        
+        // 模拟XPathParser的构造函数
+        PowerMockito.whenNew(XPathParser.class)
+                   .withArguments(SINGLE_LEG_FIX_ML)
+                   .thenReturn(intraXmlParser);
+    }
+    
+    private void mockConfigValues() {
+        // 模拟xpath评估
+        when(intraXmlParser.evaluate(anyString())).thenAnswer(invocation -> {
+            String xpath = invocation.getArgument(0);
+            switch (xpath) {
+                case "gfi.xpath.LegType": return "HedgeLegs";
+                case "gfi.xpath.LegSubID": return "2";
+                case "gfi.xpath.hedgeCurrency": return "USD";
+                case "gfi.xpath.tradeExternalId": return "TRD123";
+                case "gfi.xpath.MaxLegVal": return "100";
+                case "gfi.xpath.LegID": return "1";
+                case "gfi.xpath.tradeType": return "FX";
+                case "gfi.xpath.tradeDate": return "20230101";
+                case "gfi.xpath.trader": return "JohnDoe";
+                default: return "";
             }
+        });
+        
+        // 模拟CONFIG.getString调用
+        // 注意：这里假设CONFIG是一个可mock的对象
+        // 如果CONFIG是静态工具类，可能需要使用PowerMock
+    }
+    
+    @Test
+    public void testHandleExchange_NewTrade() throws Exception {
+        // Arrange
+        // 模拟数据库查询返回0（交易不存在）
+        when(namedParameterJdbcTemplate.queryForObject(
+            anyString(), 
+            any(Map.class), 
+            eq(Long.class)))
+            .thenReturn(0L);
+        
+        // 模拟UUID
+        PowerMockito.mockStatic(UUID.class);
+        UUID mockUuid = mock(UUID.class);
+        when(UUID.randomUUID()).thenReturn(mockUuid);
+        when(mockUuid.toString()).thenReturn("test-uuid");
+        
+        // 使用spy来部分模拟stpProcessor
+        // 模拟saveJournal和recordTradeEvent方法以避免真实调用
+        doNothing().when(stpProcessor).saveJournal(any(Exchange.class), any(Journal.class));
+        doNothing().when(stpProcessor).recordTradeEvent(any(Exchange.class), any(TradeEvent.class));
+        doNothing().when(stpProcessor).transformToMurex(
+            any(Exchange.class), anyString(), anyString(), anyString(),
+            anyString(), anyString(), anyString(), anyString());
+        
+        // Act
+        stpProcessor.handleExchange(exchange);
+        
+        // Assert
+        // 验证构造函数被调用
+        PowerMockito.verifyNew(NamedParameterJdbcTemplate.class).withArguments(mlsDbJdbcTemplate);
+        
+        // 验证数据库查询被调用
+        verify(namedParameterJdbcTemplate).queryForObject(anyString(), any(Map.class), eq(Long.class));
+        
+        // 验证exchange属性设置
+        verify(exchange).setProperty(eq("_originalId"), anyString());
+        verify(exchange).setProperty(eq("_originalSys"), anyString());
+        verify(exchange).setProperty(eq("_version"), eq("test-uuid"));
+        
+        // 验证新交易的transformToMurex被调用
+        verify(stpProcessor).transformToMurex(
+            any(Exchange.class), anyString(), anyString(), anyString(),
+            anyString(), anyString(), anyString(), anyString());
+    }
+    
+    @Test
+    public void testIsExisting_MockQuery() {
+        // Arrange
+        String originalId = "TRD123_HedgeLegs_100_1_2";
+        String originalSys = "GFI";
+        
+        Map<String, String> expectedParams = new HashMap<>();
+        expectedParams.put("referenceId", originalId);
+        expectedParams.put("originalId", originalId);
+        
+        when(namedParameterJdbcTemplate.queryForObject(
+            anyString(),
+            eq(expectedParams),
+            eq(Long.class)))
+            .thenReturn(1L);
+        
+        // 使用反射调用私有方法
+        try {
+            java.lang.reflect.Method method = StpProcessor.class.getDeclaredMethod(
+                "isExisting", String.class, String.class);
+            method.setAccessible(true);
+            
+            // Act
+            boolean result = (boolean) method.invoke(stpProcessor, originalId, originalSys);
+            
+            // Assert
+            assertTrue(result);
+            verify(namedParameterJdbcTemplate).queryForObject(anyString(), any(Map.class), eq(Long.class));
+        } catch (Exception e) {
+            fail("反射调用失败: " + e.getMessage());
         }
-
-	}
-
-    private final static String trade_version = CONFIG.getString("gfi.sql.query.trade.version");
-
-    boolean isExisting(String originalId, String originalSys) {
-        boolean res = false;
-//        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(mlsDbJdbcTemplate);
-        Map<String, String> map = new HashMap<>();
-        map.put("referenceId",originalId);
-        map.put("originalId",originalId);
-        Long count = namedParameterJdbcTemplate.queryForObject(trade_version, map, Long.class);
-        if (count > 0) {
-            res = true;
-        }
-        return res;
+    }
+    
+    // 替代方案：将isExisting方法设为包级可见，直接测试
+    @Test
+    public void testIsExisting_DirectTest() throws Exception {
+        // Arrange
+        // 使用spy来测试isExisting方法
+        StpProcessor spyProcessor = spy(stpProcessor);
+        
+        // 模拟静态字段trade_version
+        Field tradeVersionField = StpProcessor.class.getDeclaredField("trade_version");
+        tradeVersionField.setAccessible(true);
+        tradeVersionField.set(spyProcessor, "SELECT COUNT(*) FROM trades WHERE referenceId = :referenceId");
+        
+        String originalId = "TRD123_HedgeLegs_100_1_2";
+        String originalSys = "GFI";
+        
+        when(namedParameterJdbcTemplate.queryForObject(
+            eq("SELECT COUNT(*) FROM trades WHERE referenceId = :referenceId"),
+            any(Map.class),
+            eq(Long.class)))
+            .thenReturn(1L);
+        
+        // Act
+        boolean result = spyProcessor.isExisting(originalId, originalSys);
+        
+        // Assert
+        assertTrue(result);
     }
 }
